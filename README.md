@@ -1,6 +1,67 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
+
+- [Linux kernel building/testing helper scripts](#linux-kernel-buildingtesting-helper-scripts)
+	- [Setup](#setup)
+	- [Initializing the environment](#initializing-the-environment)
+		- [Command](#command)
+		- [Purpose](#purpose)
+		- [Syntax](#syntax)
+		- [Parameters](#parameters)
+		- [Example](#example)
+	- [Build guest OS kernel](#build-guest-os-kernel)
+		- [command](#command)
+		- [Purpose](#purpose-1)
+		- [Syntax](#syntax-1)
+		- [Parameters](#parameters-1)
+		- [Example](#example-1)
+	- [Mount and unmount VM disk image](#mount-and-unmount-vm-disk-image)
+		- [Command](#command-1)
+		- [Purpose](#purpose-2)
+		- [Syntax](#syntax-2)
+		- [Parameters](#parameters-2)
+		- [Example](#example-2)
+	- [Install kernel](#install-kernel)
+		- [Command](#command-2)
+		- [Purpose](#purpose-3)
+		- [Syntax](#syntax-3)
+		- [Parameters](#parameters-3)
+		- [Example](#example-3)
+	- [Launch kernel in QEMU Virtual Machine (VM)](#launch-kernel-in-qemu-virtual-machine-vm)
+		- [Command](#command-3)
+		- [Purpose](#purpose-4)
+		- [Syntax](#syntax-4)
+		- [Parameters](#parameters-4)
+		- [Example](#example-4)
+	- [Tips](#tips)
+		- [Hack KVM with nested virtualization](#hack-kvm-with-nested-virtualization)
+			- [Example](#example-5)
+			- [Explanation](#explanation)
+		- [Enable kernel debugging](#enable-kernel-debugging)
+			- [Example](#example-6)
+			- [Reference](#reference)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Linux kernel building/testing helper scripts
 
 These scripts help set up multiple Linux kernel building instances and facilitate their test using QEMU/KVM on Linux.
+
+## Setup
+
+```bash
+mkdir -p $HOME/hacking/linux-kernel
+cd $HOME/hacking/linux-kernel
+git clone https://github.com/pw4ever/linux-kernel-hacking-helper.git helper
+mkdir -p $HOME/arena/linux
+```
+
+In shell per-user init file (e.g., `.profile` which is sourced by `.bashrc`/`.zshrc`):
+```bash
+export PATH=$HOME/hacking/linux-kernel/helper/:$PATH
+export ARENA=$HOME/arena/linux/
+```
 
 ## Initializing the environment
 ### Command
