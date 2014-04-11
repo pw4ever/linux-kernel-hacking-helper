@@ -51,6 +51,8 @@ These scripts help set up multiple Linux kernel building instances and facilitat
 
 ## Setup
 
+### Installing the scripts
+
 ```bash
 mkdir -p $HOME/hacking/linux-kernel
 cd $HOME/hacking/linux-kernel
@@ -58,33 +60,35 @@ git clone https://github.com/pw4ever/linux-kernel-hacking-helper.git helper
 mkdir -p $HOME/arena/linux
 ```
 
+### Add environment variables
+
 In shell per-user init file (e.g., `.profile` which is sourced by `.bashrc`/`.zshrc`):
 ```bash
 export PATH=$HOME/hacking/linux-kernel/helper/:$PATH
 export ARENA=$HOME/arena/linux/
 ```
 
-## Initializing the environment
+### Initializing the environment
 
-### Command
+#### Command
 
 hack_init.sh
 
-### Purpose
+#### Purpose
 
 Initializing the environment for the rest of the toolkit by populating the current user's home directories with required directories and files.
 
-### Syntax
+#### Syntax
 
 ```bash
 hack_init.sh n
 ```
 
-### Parameters
+#### Parameters
 
 * n: Maximal number of kernel variants to be accommodated.
 
-### Example
+#### Example
 
 ```bash
 hack_init.sh 100
@@ -92,23 +96,25 @@ hack_init.sh 100
 
 Prepare the file-system structure required to support up to 100 virtual machines; legitimate instances for target kernel are from 1 to 100.
 
-## Build guest OS kernel
+## Build and test the kernel
 
-### command
+### Build guest OS kernel
+
+#### command
 
 hack_kernel_build.sh
 
-### Purpose
+#### Purpose
 
 Build, with optional configuration and parallelism, guest OS kernel.
 
-### Syntax
+#### Syntax
 
 ```bash
 hack_kernel_build.sh n [parallel [config]]
 ```
 
-### Parameters
+#### Parameters
 
 * n: The target kernel instance.
 
@@ -116,7 +122,7 @@ hack_kernel_build.sh n [parallel [config]]
 
 * config: The (optinal) config method, e.g., nconfig for the Linux kernel.
 
-### Example
+#### Example
 
 ```bash
 hack_kernel_build.sh 2 8
@@ -124,24 +130,24 @@ hack_kernel_build.sh 2 8
 
 Build target kernel instance 2 with 8 parallel jobs using existing configuration for that instance (perhaps created by a previous run of this command with a config option).
 
-## Mount and unmount VM disk image
+### Mount and unmount VM disk image
 
-### Command
+#### Command
 
 hack_mount.sh and hack_umount.sh
 
-### Purpose
+#### Purpose
 
 Mount and unmount VM disk image so that the kernel instance built by hack_kernel_build.sh can be later installed by hack_kernel_install.sh; this makes the kernel loadable modules for the customized kernel accessible from inside the VM.
 
-### Syntax
+#### Syntax
 
 ```bash
 hack_mount.sh nbd name root-part
 hack_umount.sh nbd
 ```
 
-### Parameters
+#### Parameters
 
 * nbd: Network Block Device (NBD) device to be used for mounting the image.
 
@@ -149,7 +155,7 @@ hack_umount.sh nbd
 
 * root-part: The partition for the root filesystem of the VM image.
 
-### Example
+#### Example
 
 ```bash
 hack_mount.sh 2 arch-base 2
@@ -158,7 +164,7 @@ hack_umount.sh 2
 
 Mount the root filesystem of the VM disk image image/arch-base.img under user's home directory to NBD device 2 (the device file for the root filesystem is /dev/nbd2p2 in Linux). Unmount the partition later with hack_umount.sh.
 
-### Note
+#### Note
 
 The `nbd` device must be loaded:
 ```bash
@@ -174,27 +180,27 @@ and `/etc/modprobe.d/ndb.conf`:
 options nbd max_part=16
 ```
 
-## Install kernel
+### Install kernel
 
-### Command
+#### Command
 
 hack_kernel_install.sh
 
-### Purpose
+#### Purpose
 
 Install the kernel instance so it can be later launched.
 
-### Syntax
+#### Syntax
 
 ```bash
 hack_kernel_install.sh n
 ```
 
-### Parameters
+#### Parameters
 
 * n: The kernel instance to be installed; VM image should have been mounted by hack_mount.sh before this and un-mounted by hack_umount.sh after this.
 
-### Example
+#### Example
 
 ```bash
 hack_kernel_install.sh 2
@@ -202,23 +208,23 @@ hack_kernel_install.sh 2
 
 Install kernel instance 2.
 
-## Launch kernel in QEMU Virtual Machine (VM)
+### Launch kernel in QEMU Virtual Machine (VM)
 
-### Command
+#### Command
 
 hack_kernel_test.sh
 
-### Purpose
+#### Purpose
 
 Launch customized kernel with a disk image in a VM.
 
-### Syntax
+#### Syntax
 
 ```bash
 hack_kernel_test.sh n vm-image kernel-opts vmm-opts
 ```
 
-### Parameters
+#### Parameters
 
 * n: Kernel instance to be launched.
 
@@ -228,7 +234,7 @@ hack_kernel_test.sh n vm-image kernel-opts vmm-opts
 
 * vmm-opts: Options to be passed to the underlying VMM.
 
-### Example
+#### Example
 
 ```
 hack_kernel_test.sh 2 arch-base "" -vnc :2
