@@ -1,21 +1,15 @@
 #! /bin/bash
 
-function die {
-cat > /dev/stderr <<-END
-$1
-END
+# https://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source ${DIR}/common.sh
 
-exit 1; 
-}
+target_inst=$1
+shift
+if [[ -z "$target_inst" ]]; then die "Usage: $0 <target inst>"; fi
 
-target_ver=$1
-if [[ -z "$target_ver" ]]; then die "Usage: $0 <N>"; fi
-
-if [[ -z "$ARENA" ]]; then ARENA=$HOME/arena; fi
-if [[ ! -d "$ARENA" ]]; then die "${ARENA} is not a directory."; fi
-ARENA=${ARENA%%/} # remove trailing /
-target_dir=${ARENA}/target/${target_ver}
-aux_dir=${ARENA}/aux
-if [[ ! -d "$target_dir" || ! -d "$aux_dir" ]]; then die "Target or aux directory error."; fi
+init_arena "$ARENA"
+init_target_dir "$target_inst"
+init_aux_dir
 
 mkinitcpio -g ${target_dir}/initramfs-linux -k ${target_dir}/vmlinuz -r ${target_dir} -c ${aux_dir}/mkinitcpio.conf 

@@ -1,16 +1,15 @@
 #! /bin/bash
 
-function die {
-cat > /dev/stderr <<-END
-$1
-END
-
-exit 1; 
-}
+# https://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source ${DIR}/common.sh
 
 nbd_no=$1
-arch_img=$2
-part_no=$3
+shift
+arch_img=$1
+shift
+part_no=$1
+shift
 if [[ -z "$nbd_no" || -z "$arch_img" || -z "$part_no" ]]; then die "Usage: $0 <QEMU nbd no> <arch image name> <root partition number>"; fi
 
 #sudo modprobe nbd max_part=16

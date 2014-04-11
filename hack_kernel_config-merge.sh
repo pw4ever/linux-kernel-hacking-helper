@@ -6,15 +6,9 @@ source ${DIR}/common.sh
 
 target_inst=$1
 shift
-par_job=$1
-shift
-if [[ -z "$target_inst" ]]; then die "Usage: $0 <target inst> [<# of parallel jobs>] "; fi
+if [[ -z "$target_inst" ]]; then die "Usage: $0 <N> [<config fragments>]*"; fi
 
 init_arena "$ARENA"
 init_build_dir "$target_inst"
 
-if [[ -n "$par_job" ]]; then
-    make_jobs="-j $par_job"
-fi
-
-make ${make_jobs} O="${build_dir}"
+scripts/kconfig/merge_config.sh -m -O "${build_dir}" "${build_dir}/.config" $*

@@ -7,47 +7,12 @@
 		- [One-time setup](#one-time-setup)
 		- [Build, install, and test the kernel](#build-install-and-test-the-kernel)
 		- [Build, install, and test a kernel module](#build-install-and-test-a-kernel-module)
-	- [Setup](#setup)
-		- [Installing the scripts](#installing-the-scripts)
-		- [Add environment variables](#add-environment-variables)
-		- [Initializing the environment](#initializing-the-environment)
-			- [Command](#command)
-			- [Purpose](#purpose)
-			- [Syntax](#syntax)
-			- [Parameters](#parameters)
-			- [Example](#example)
-	- [Build and test the kernel](#build-and-test-the-kernel)
-		- [Build guest OS kernel](#build-guest-os-kernel)
-			- [command](#command)
-			- [Purpose](#purpose-1)
-			- [Syntax](#syntax-1)
-			- [Parameters](#parameters-1)
-			- [Example](#example-1)
-		- [Mount and unmount VM disk image](#mount-and-unmount-vm-disk-image)
-			- [Command](#command-1)
-			- [Purpose](#purpose-2)
-			- [Syntax](#syntax-2)
-			- [Parameters](#parameters-2)
-			- [Example](#example-2)
-			- [Note](#note)
-		- [Install kernel](#install-kernel)
-			- [Command](#command-2)
-			- [Purpose](#purpose-3)
-			- [Syntax](#syntax-3)
-			- [Parameters](#parameters-3)
-			- [Example](#example-3)
-		- [Launch kernel in QEMU Virtual Machine (VM)](#launch-kernel-in-qemu-virtual-machine-vm)
-			- [Command](#command-3)
-			- [Purpose](#purpose-4)
-			- [Syntax](#syntax-4)
-			- [Parameters](#parameters-4)
-			- [Example](#example-4)
 	- [Tips](#tips)
 		- [Hack KVM with nested virtualization](#hack-kvm-with-nested-virtualization)
-			- [Example](#example-5)
+			- [Example](#example)
 			- [Explanation](#explanation)
 		- [Enable kernel debugging](#enable-kernel-debugging)
-			- [Example](#example-6)
+			- [Example](#example-1)
 			- [Reference](#reference)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -57,8 +22,6 @@
 These scripts help set up multiple Linux kernel building instances and facilitate their test using QEMU/KVM on Linux.
 
 ## Cheatsheet
-
-See rest of the doc for details.
 
 ### One-time setup
 
@@ -82,7 +45,10 @@ Put a QEMU Linux OS image (e.g., a minimal [Arch Linux](https://www.archlinux.or
 Suppose they are `$HOME/image/arch.img` and `$HOME/image/arch.uuid` from now on, and the `root` flesystem (`/`; with `/usr` on the same partition with `/`) is `/dev/sda2` in `arch.img`.
 
 ```bash
-hack_kernel_build.sh 1 8 defconfig # build kernel instance 1 with 8 parallel jobs with defconfig
+# cd $HOME/project/linux # cd into the directory of kernel source
+hack_kernel_config-init.sh 1 defconfig # config kernel with defconfig
+hack_kernel_config-merge.sh 1 $HOME/hacking/linux-kernel/helper/config/kgdb # merge kgdb support in config
+hack_kernel_build.sh 1 8 # build kernel instance 1 with 8 parallel jobs
 hack_mount.sh 1 arch 2 # mount `/dev/sda2` (the root partition) of `$HOME/image/arch.img` with host's `/dev/ndb1` onto `$HOME/image/mnt/`
 hack_kernel_install.sh 1 # install kernel instance 1 with initramfs into `$HOME/image/mnt/` (which has the mounted `$HOME/image/arch.img`)
 hack_kernel_initramfs.sh 1 # optional, already done in hack_kernel_install.sh, need $ARENA
@@ -100,201 +66,6 @@ hack_mount.sh 1 arch 2 # if needed; see above
 hack_mod_install.sh 1 # install into kernel instance 1 
 hack_umount.sh 1 # if needed; see above
 ```
-
-## Setup
-
-### Installing the scripts
-
-```bash
-mkdir -p $HOME/hacking/linux-kernel
-cd $HOME/hacking/linux-kernel
-git clone https://github.com/pw4ever/linux-kernel-hacking-helper.git helper
-mkdir -p $HOME/arena/linux
-```
-
-### Add environment variables
-
-In shell per-user init file (e.g., `.profile` which is sourced by `.bashrc`/`.zshrc`):
-```bash
-export PATH=$HOME/hacking/linux-kernel/helper/:$PATH
-export ARENA=$HOME/arena/linux/
-```
-
-### Initializing the environment
-
-#### Command
-
-hack_init.sh
-
-#### Purpose
-
-Initializing the environment for the rest of the toolkit by populating the current user's home directories with required directories and files.
-
-#### Syntax
-
-```bash
-hack_init.sh n
-```
-
-#### Parameters
-
-* n: Maximal number of kernel variants to be accommodated.
-
-#### Example
-
-```bash
-hack_init.sh 100
-```
-
-Prepare the file-system structure required to support up to 100 virtual machines; legitimate instances for target kernel are from 1 to 100.
-
-## Build and test the kernel
-
-### Build guest OS kernel
-
-#### command
-
-hack_kernel_build.sh
-
-#### Purpose
-
-Build, with optional configuration and parallelism, guest OS kernel.
-
-#### Syntax
-
-```bash
-hack_kernel_build.sh n [parallel [config]]
-```
-
-#### Parameters
-
-* n: The target kernel instance.
-
-* parallel: The (optional) number of parallel building jobs; recommended value is twice the number of CPU cores.
-
-* config: The (optinal) config method, e.g., nconfig for the Linux kernel.
-
-#### Example
-
-```bash
-hack_kernel_build.sh 2 8
-```
-
-Build target kernel instance 2 with 8 parallel jobs using existing configuration for that instance (perhaps created by a previous run of this command with a config option).
-
-### Mount and unmount VM disk image
-
-#### Command
-
-hack_mount.sh and hack_umount.sh
-
-#### Purpose
-
-Mount and unmount VM disk image so that the kernel instance built by hack_kernel_build.sh can be later installed by hack_kernel_install.sh; this makes the kernel loadable modules for the customized kernel accessible from inside the VM.
-
-#### Syntax
-
-```bash
-hack_mount.sh nbd name root-part
-hack_umount.sh nbd
-```
-
-#### Parameters
-
-* nbd: Network Block Device (NBD) device to be used for mounting the image.
-
-* name: The name of the VM disk image (without the .img suffix) to be found at the image directory under the user’s home directory.
-
-* root-part: The partition for the root filesystem of the VM image.
-
-#### Example
-
-```bash
-hack_mount.sh 2 arch-base 2
-hack_umount.sh 2
-```
-
-Mount the root filesystem of the VM disk image image/arch-base.img under user's home directory to NBD device 2 (the device file for the root filesystem is /dev/nbd2p2 in Linux). Unmount the partition later with hack_umount.sh.
-
-#### Note
-
-The `nbd` device must be loaded:
-```bash
-modprobe nbd max_part=16
-```
-
-To do this on boot, create `/etc/modules-load.d/nbd.conf`:
-```bash
-nbd
-```
-and `/etc/modprobe.d/ndb.conf`:
-```bash
-options nbd max_part=16
-```
-
-### Install kernel
-
-#### Command
-
-hack_kernel_install.sh
-
-#### Purpose
-
-Install the kernel instance so it can be later launched.
-
-**NOTE** To ensure the kernel is installed into the image, the VM image should have been mounted before (with "hack_mount.sh") and  umounted after (with "hack_umount.sh"). The assumption is that [/usr is on the same partition with /](http://freedesktop.org/wiki/Software/systemd/separate-usr-is-broken/).
-
-#### Syntax
-
-```bash
-hack_kernel_install.sh n
-```
-
-#### Parameters
-
-* n: The kernel instance to be installed.
-
-#### Example
-
-```bash
-hack_kernel_install.sh 2
-```
-
-Install kernel instance 2.
-
-### Launch kernel in QEMU Virtual Machine (VM)
-
-#### Command
-
-hack_kernel_test.sh
-
-#### Purpose
-
-Launch customized kernel with a disk image in a VM.
-
-#### Syntax
-
-```bash
-hack_kernel_test.sh n vm-image kernel-opts vmm-opts
-```
-
-#### Parameters
-
-* n: Kernel instance to be launched.
-
-* vm-image: Basename of the disk image file (without the .img suffix).
-
-* kernel-opts: Options to be passed to the kernel.
-
-* vmm-opts: Options to be passed to the underlying VMM.
-
-#### Example
-
-```
-hack_kernel_test.sh 2 arch-base "" -vnc :2
-```
-
-Launch kernel instance 2 with the image/arch-base.img disk image file using default kernel options on VNC channel 5902 opened by the VMM (in this case, QEMU/KVM).
 
 ## Tips
 
@@ -319,7 +90,7 @@ This makes the (first-level) VM accessible from VNC port 2 (TCP port 5902) and t
 #### Example
 
 ```bash
-hack_kernel_test.sh 2 arch-base "kgdboc=kdb,ttyS0 kgdbwait kgdbcon" -vnc :2 -cpu qemu64,+vmx -net user -net nic,model=virtio -redir tcp:5907::5907 -serial 'pty'
+hack_kernel_test.sh 2 arch "kgdboc=kdb,ttyS0 kgdbwait kgdbcon" -vnc :2 -cpu qemu64,+vmx -net user -net nic,model=virtio -redir tcp:5907::5907 -serial 'pty'
 ```
 with the following output `char device redirected to /dev/pts/15 (label serial0)`
 

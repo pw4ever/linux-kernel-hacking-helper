@@ -6,15 +6,11 @@ source ${DIR}/common.sh
 
 target_inst=$1
 shift
-par_job=$1
+config_method=$1
 shift
-if [[ -z "$target_inst" ]]; then die "Usage: $0 <target inst> [<# of parallel jobs>] "; fi
+if [[ -z "${target_inst}" || -z "${config_method}" ]]; then die "Usage: $0 <target inst> <kernel config method>"; fi
 
 init_arena "$ARENA"
 init_build_dir "$target_inst"
 
-if [[ -n "$par_job" ]]; then
-    make_jobs="-j $par_job"
-fi
-
-make ${make_jobs} O="${build_dir}"
+make O="${build_dir}" ${config_method}
