@@ -22,6 +22,7 @@
 		- [Syntax](#syntax-2)
 		- [Parameters](#parameters-2)
 		- [Example](#example-2)
+		- [Note](#note)
 	- [Install kernel](#install-kernel)
 		- [Command](#command-2)
 		- [Purpose](#purpose-3)
@@ -70,13 +71,13 @@ hack_init.sh
 Initializing the environment for the rest of the toolkit by populating the current user's home directories with required directories and files.
 ### Syntax
 ```bash
-$ hack_init.sh n
+hack_init.sh n
 ```
 ### Parameters
 * n: Maximal number of kernel variants to be accommodated.
 ### Example
 ```bash
-$ hack_init.sh 100
+hack_init.sh 100
 ```
 Prepare the file-system structure required to support up to 100 virtual machines; legitimate instances for target kernel are from 1 to 100.
 
@@ -87,7 +88,7 @@ hack_kernel_build.sh
 Build, with optional configuration and parallelism, guest OS kernel.
 ### Syntax
 ```bash
-$ hack_kernel_build.sh n [parallel [config]]
+hack_kernel_build.sh n [parallel [config]]
 ```
 ### Parameters
 * n: The target kernel instance.
@@ -95,7 +96,7 @@ $ hack_kernel_build.sh n [parallel [config]]
 * config: The (optinal) config method, e.g., nconfig for the Linux kernel.
 ### Example
 ```bash
-$ hack_kernel_build.sh 2 8
+hack_kernel_build.sh 2 8
 ```
 Build target kernel instance 2 with 8 parallel jobs using existing configuration for that instance (perhaps created by a previous run of this command with a config option).
 
@@ -106,8 +107,8 @@ hack_mount.sh and hack_umount.sh
 Mount and unmount VM disk image so that the kernel instance built by hack_kernel_build.sh can be later installed by hack_kernel_install.sh; this makes the kernel loadable modules for the customized kernel accessible from inside the VM.
 ### Syntax
 ```bash
-$ hack_mount.sh nbd name root-part
-$ hack_umount.sh nbd
+hack_mount.sh nbd name root-part
+hack_umount.sh nbd
 ```
 ### Parameters
 * nbd: Network Block Device (NBD) device to be used for mounting the image.
@@ -115,10 +116,24 @@ $ hack_umount.sh nbd
 * root-part: The partition for the root filesystem of the VM image.
 ### Example
 ```bash
-$ hack_mount.sh 2 arch-base 2
-$ hack_umount.sh 2
+hack_mount.sh 2 arch-base 2
+hack_umount.sh 2
 ```
 Mount the root filesystem of the VM disk image image/arch-base.img under user's home directory to NBD device 2 (the device file for the root filesystem is /dev/nbd2p2 in Linux). Unmount the partition later with hack_umount.sh.
+### Note
+The `nbd` device must be loaded:
+```bash
+modprobe nbd max_part=16
+```
+
+To do this on boot, create `/etc/modules-load.d/nbd.conf`:
+```bash
+nbd
+```
+and `/etc/modprobe.d/ndb.conf`:
+```bash
+options nbd max_part=16
+```
 
 ## Install kernel
 ### Command
@@ -127,13 +142,13 @@ hack_kernel_install.sh
 Install the kernel instance so it can be later launched.
 ### Syntax
 ```bash
-$ hack_kernel_install.sh n
+hack_kernel_install.sh n
 ```
 ### Parameters
 * n: The kernel instance to be installed; VM image should have been mounted by hack_mount.sh before this and un-mounted by hack_umount.sh after this.
 ### Example
 ```bash
-$ hack_kernel_install.sh 2
+hack_kernel_install.sh 2
 ```
 Install kernel instance 2.
 
@@ -144,7 +159,7 @@ hack_kernel_test.sh
 Launch customized kernel with a disk image in a VM.
 ### Syntax
 ```bash
-$ hack_kernel_test.sh n vm-image kernel-opts vmm-opts
+hack_kernel_test.sh n vm-image kernel-opts vmm-opts
 ```
 ### Parameters
 * n: Kernel instance to be launched.
@@ -153,7 +168,7 @@ $ hack_kernel_test.sh n vm-image kernel-opts vmm-opts
 * vmm-opts: Options to be passed to the underlying VMM.
 ### Example
 ```
-$ hack_kernel_test.sh 2 arch-base "" -vnc :2
+hack_kernel_test.sh 2 arch-base "" -vnc :2
 ```
 Launch kernel instance 2 with the image/arch-base.img disk image file using default kernel options on VNC channel 5902 opened by the VMM (in this case, QEMU/KVM).
 
@@ -162,7 +177,7 @@ Launch kernel instance 2 with the image/arch-base.img disk image file using defa
 ### Hack KVM with nested virtualization
 #### Example
 ```bash
-$ hack_kernel_test.sh 2 arch-base "" -vnc :2 -cpu qemu64,+vmx -net user -net nic,model=virtio -redir tcp:5907::5907
+hack_kernel_test.sh 2 arch-base "" -vnc :2 -cpu qemu64,+vmx -net user -net nic,model=virtio -redir tcp:5907::5907
 ```
 #### Explanation
 * -cpu qemu64,+vmx: This makes the virtual CPU inherits the Intel VT-x feature of the physical machine, which is required for launching a nested VM.
@@ -173,15 +188,19 @@ This makes the (first-level) VM accessible from VNC port 2 (TCP port 5902) and t
 ### Enable kernel debugging
 #### Example
 ```bash
-$ hack_kernel_test.sh 2 arch-base "kgdboc=kdb,ttyS0 kgdbwait kgdbcon" -vnc :2 -cpu qemu64,+vmx -net user -net nic,model=virtio -redir tcp:5907::5907 -serial 'pty'
+hack_kernel_test.sh 2 arch-base "kgdboc=kdb,ttyS0 kgdbwait kgdbcon" -vnc :2 -cpu qemu64,+vmx -net user -net nic,model=virtio -redir tcp:5907::5907 -serial 'pty'
 ```
 with the following output `char device redirected to /dev/pts/15 (label serial0)`
 
-Then use GDB remote debugging to connect to it
+Then use GDB remote debugging to connect to it:
 ```bash
-$ cd $ARENA/build/2
-$ gdb vmlinux
-(gdb) target remote /dev/pts/15
+cd $ARENA/build/2
+gdb vmlinux
 ```
+After in GDB command line:
+```bash
+target remote /dev/pts/15
+```
+
 #### Reference
 [Using kgdb, kdb and the kernel debugger internals](https://www.kernel.org/doc/htmldocs/kgdb/index.html)
