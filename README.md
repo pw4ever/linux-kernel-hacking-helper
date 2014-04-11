@@ -3,6 +3,10 @@
 **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
 - [Linux kernel building/testing helper scripts](#linux-kernel-buildingtesting-helper-scripts)
+	- [Cheatsheet](#cheatsheet)
+		- [One-time setup](#one-time-setup)
+		- [Build, install, and test the kernel](#build-install-and-test-the-kernel)
+		- [Build, install, and test a kernel module](#build-install-and-test-a-kernel-module)
 	- [Setup](#setup)
 		- [Installing the scripts](#installing-the-scripts)
 		- [Add environment variables](#add-environment-variables)
@@ -51,6 +55,51 @@
 # Linux kernel building/testing helper scripts
 
 These scripts help set up multiple Linux kernel building instances and facilitate their test using QEMU/KVM on Linux.
+
+## Cheatsheet
+
+See rest of the doc for details.
+
+### One-time setup
+
+```bash
+mkdir -p $HOME/hacking/linux-kernel
+cd $HOME/hacking/linux-kernel
+git clone https://github.com/pw4ever/linux-kernel-hacking-helper.git helper
+mkdir -p $HOME/arena/linux
+export PATH=$HOME/hacking/linux-kernel/helper/:$PATH
+export ARENA=$HOME/arena/linux/
+hack_init.sh 100
+/home/wei/
+cp $HOME/hacking/linux-kernel/helper/aux/mkinitcpio.conf $ARENA/aux/
+modprobe nbd max_part=16
+```
+
+### Build, install, and test the kernel
+
+Put a QEMU Linux OS image (e.g., a minimal [Arch Linux](https://www.archlinux.org/) installation) and its root fs UUID is under $HOME/image.
+
+Suppose they are `$HOME/image/arch.img` and `$HOME/image/arch.uuid` from now on, and the `root` flesystem (`/`; with `/usr` on the same partition with `/`) is `/dev/sda2` in `arch.img`.
+
+```bash
+hack_kernel_build.sh 1 8 defconfig # build kernel instance 1 with 8 parallel jobs with defconfig
+hack_mount.sh 1 arch 2 # mount `/dev/sda2` (the root partition) of `$HOME/image/arch.img` with host's `/dev/ndb1` onto `$HOME/image/mnt/`
+hack_kernel_install.sh 1 # install kernel instance 1 with initramfs into `$HOME/image/mnt/` (which has the mounted `$HOME/image/arch.img`)
+hack_kernel_initramfs.sh 1 # optional, already done in hack_kernel_install.sh, need $ARENA
+hack_umount.sh 1 # umount `$HOME/image/mnt/` and diassociate `/dev/nbd1`
+# read kdb doc at https://www.kernel.org/doc/htmldocs/kgdb/index.html
+# launch kernel instance 1 in QEMU with nested virtualization and kernel debugging support
+hack_kernel_test.sh 1 arch-base "kgdboc=kdb,ttyS0 kgdbwait kgdbcon" -vnc :2 -cpu qemu64,+vmx -net user -net nic,model=virtio -redir tcp:5907::5907 -serial 'pty'
+```
+
+### Build, install, and test a kernel module
+
+```bash
+hack_mod_build.sh 1 8 # build with kernel instance 1 in 8 parallel jobs
+hack_mount.sh 1 arch 2 # if needed; see above
+hack_mod_install.sh 1 # install into kernel instance 1 
+hack_umount.sh 1 # if needed; see above
+```
 
 ## Setup
 
@@ -193,6 +242,8 @@ hack_kernel_install.sh
 
 Install the kernel instance so it can be later launched.
 
+**NOTE** To ensure the kernel is installed into the image, the VM image should have been mounted before (with "hack_mount.sh") and  umounted after (with "hack_umount.sh"). The assumption is that [/usr is on the same partition with /](http://freedesktop.org/wiki/Software/systemd/separate-usr-is-broken/).
+
 #### Syntax
 
 ```bash
@@ -201,7 +252,7 @@ hack_kernel_install.sh n
 
 #### Parameters
 
-* n: The kernel instance to be installed; VM image should have been mounted by hack_mount.sh before this and un-mounted by hack_umount.sh after this.
+* n: The kernel instance to be installed.
 
 #### Example
 
