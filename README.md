@@ -26,7 +26,6 @@ mkdir -p $HOME/arena/linux
 export PATH=$HOME/hacking/linux-kernel/helper/:$PATH
 export ARENA=$HOME/arena/linux/
 hack_init.sh 100
-/home/wei/
 cp $HOME/hacking/linux-kernel/helper/aux/mkinitcpio.conf $ARENA/aux/
 modprobe nbd max_part=16
 ```
