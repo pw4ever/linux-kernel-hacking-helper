@@ -7,13 +7,6 @@
 		- [One-time setup](#one-time-setup)
 		- [Build, install, and test the kernel](#build-install-and-test-the-kernel)
 		- [Build, install, and test a kernel module](#build-install-and-test-a-kernel-module)
-	- [Tips](#tips)
-		- [Hack KVM with nested virtualization](#hack-kvm-with-nested-virtualization)
-			- [Example](#example)
-			- [Explanation](#explanation)
-		- [Enable kernel debugging](#enable-kernel-debugging)
-			- [Example](#example-1)
-			- [Reference](#reference)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -55,8 +48,19 @@ hack_kernel_initramfs.sh 1 # optional, already done in hack_kernel_install.sh, n
 hack_umount.sh 1 # umount `$HOME/image/mnt/` and diassociate `/dev/nbd1`
 # read kdb doc at https://www.kernel.org/doc/htmldocs/kgdb/index.html
 # launch kernel instance 1 in QEMU with nested virtualization and kernel debugging support
-hack_kernel_test.sh 1 arch-base "kgdboc=kdb,ttyS0 kgdbwait kgdbcon" -vnc :2 -cpu qemu64,+vmx -net user -net nic,model=virtio -redir tcp:5907::5907 -serial 'pty'
+hack_kernel_test.sh 1 arch 'kgdboc=kms,kbd,ttyS0,115200 kgdbwait kgdbcon' -enable-kvm -m 1024M -vnc :2 -cpu qemu64,+vmx -net nic -net user,hostfwd=tcp::5907-:5907 -serial pty
 ```
+
+Connect to the guest machine through VNC port :2 (5902) and PTY device `/dev/pts/nn` (nn is some integer; this will be printed out by QEMU; QEMU doc says pty is available only on Linux). Nested QEMU session can be observed at VNC port :7 (5907).
+
+After `hack_kernel_debug.sh 1` and enter GDB:
+
+```bash
+set remotebaud 115200
+target remote /dev/pts/nn
+```
+
+In the guest, [break in to kgdb/kdb with `echo g > /proc/sysrq-trigger` as `root`](https://www.kernel.org/doc/htmldocs/kgdb/EnableKGDB.html). We can also [switch between kgdb and kdb](https://www.kernel.org/doc/htmldocs/kgdb/switchKdbKgdb.html).
 
 ### Build, install, and test a kernel module
 
@@ -66,45 +70,3 @@ hack_mount.sh 1 arch 2 # if needed; see above
 hack_mod_install.sh 1 # install into kernel instance 1 
 hack_umount.sh 1 # if needed; see above
 ```
-
-## Tips
-
-### Hack KVM with nested virtualization
-
-#### Example
-
-```bash
-hack_kernel_test.sh 2 arch-base "" -vnc :2 -cpu qemu64,+vmx -net user -net nic,model=virtio -redir tcp:5907::5907
-```
-
-#### Explanation
-
-* -cpu qemu64,+vmx: This makes the virtual CPU inherits the Intel VT-x feature of the physical machine, which is required for launching a nested VM.
-
-* -net user -net nic,model=virtio -redir tcp:5907::5907: This redirects the TCP port 5907 of the guest OS inside the (first-level) VM to the host OS.
-
-This makes the (first-level) VM accessible from VNC port 2 (TCP port 5902) and the nested VM accessible from VNC port 7 (TCP port 5907) on the host machine.
-
-### Enable kernel debugging
-
-#### Example
-
-```bash
-hack_kernel_test.sh 2 arch "kgdboc=kdb,ttyS0 kgdbwait kgdbcon" -vnc :2 -cpu qemu64,+vmx -net user -net nic,model=virtio -redir tcp:5907::5907 -serial 'pty'
-```
-with the following output `char device redirected to /dev/pts/15 (label serial0)`
-
-Then use GDB remote debugging to connect to it:
-```bash
-cd $ARENA/build/2
-gdb vmlinux
-```
-
-After in GDB command line:
-```bash
-target remote /dev/pts/15
-```
-
-#### Reference
-
-[Using kgdb, kdb and the kernel debugger internals](https://www.kernel.org/doc/htmldocs/kgdb/index.html)
