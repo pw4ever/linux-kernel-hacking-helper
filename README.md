@@ -34,7 +34,7 @@ modprobe nbd max_part=16
 
 Put a QEMU Linux OS image (e.g., a minimal [Arch Linux](https://www.archlinux.org/) installation) and its root fs UUID is under $HOME/image.
 
-Suppose they are `$HOME/image/arch.img` and `$HOME/image/arch.uuid` from now on, and the `root` flesystem (`/`; with `/usr` on the same partition with `/`) is `/dev/sda2` in `arch.img` (There is [an Arch Linux qcow2 image](http://cs.iupui.edu/~pengw/download/arch-clean.tar) hosted on [my homepage](http://cs.iupui.edu/~pengw)).
+Suppose they are `$HOME/image/arch.img` and `$HOME/image/arch.uuid` from now on, and the `root` flesystem (`/`; with `/usr` on the same partition with `/`) is `/dev/sda2` in `arch.img` (There is [an Arch Linux qcow2 image](http://cs.iupui.edu/~pengw/download/arch-clean.tar) hosted on [my homepage](http://cs.iupui.edu/~pengw); `sudo`-able username/password: user/user).
 
 ```bash
 # cd $HOME/project/linux # cd into the directory of kernel source
