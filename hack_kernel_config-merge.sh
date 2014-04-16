@@ -11,4 +11,4 @@ if [[ -z "$target_inst" ]]; then die "Usage: $0 <N> [<config fragments>]*"; fi
 init_arena "$ARENA"
 init_build_dir "$target_inst"
 
-scripts/kconfig/merge_config.sh -m -O "${build_dir}" "${build_dir}/.config" $*
+${DIR}/scripts/merge_config.sh -m -O "${build_dir}" "${build_dir}/.config" $*
