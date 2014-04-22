@@ -38,6 +38,7 @@ Suppose they are `$HOME/image/arch.img` and `$HOME/image/arch.uuid` from now on,
 
 ```bash
 # cd $HOME/project/linux # cd into the directory of kernel source
+hack_kernel_config-init.sh 1 mrproper # clobber stale object files
 hack_kernel_config-init.sh 1 defconfig # config kernel with defconfig
 hack_kernel_config-merge.sh 1 $HOME/hacking/linux-kernel/helper/config/kgdb # merge kgdb support in config
 hack_kernel_build.sh 1 8 # build kernel instance 1 with 8 parallel jobs
