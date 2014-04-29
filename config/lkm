@@ -2,3 +2,4 @@
 # especially useful for Android kernel
 
 CONFIG_MODULES=y
+CONFIG_MODULE_UNLOAD=y
