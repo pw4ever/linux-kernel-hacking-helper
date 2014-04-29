@@ -1,0 +1,4 @@
+# enable loadable kernel modules
+# especially useful for Android kernel
+
+CONFIG_MODULES=y
