@@ -13,6 +13,7 @@ exit 1;
 function init_arena {
 local arena=$1
 if [[ -z "$arena" ]]; then ARENA=$HOME/arena; fi
+mkdir -p "$ARENA"
 if [[ ! -d "$ARENA" ]]; then die "${ARENA} is not a directory."; fi
 ARENA=${ARENA%%/} # remove trailing /
 }
