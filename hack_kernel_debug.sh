@@ -13,4 +13,5 @@ if [[ -z "$target_inst" ]]; then die "Usage: $0 <target inst>"; fi
 init_arena "$ARENA"
 init_build_dir "$target_inst"
 
-gdb ${build_dir}/vmlinux
+cd "${build_dir}"
+gdb -ex 'target remote :1234' ${build_dir}/vmlinux
