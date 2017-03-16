@@ -3,10 +3,12 @@
 **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
 - [Linux kernel building/testing helper scripts](#linux-kernel-buildingtesting-helper-scripts)
-	- [Cheatsheet](#cheatsheet)
-		- [One-time setup](#one-time-setup)
-		- [Build, install, and test the kernel](#build-install-and-test-the-kernel)
-		- [Build, install, and test a kernel module](#build-install-and-test-a-kernel-module)
+  - [Cheatsheet](#cheatsheet)
+    - [One-time setup](#one-time-setup)
+    - [Build, install, and test the kernel](#build-install-and-test-the-kernel)
+      - [QEMU GDBServer-based kernel test and debug (recommended)](#qemu-gdbserver-based-kernel-test-and-debug-recommended)
+      - [Virtual-serial-port-based kernel test and debug (not recommended)](#virtual-serial-port-based-kernel-test-and-debug-not-recommended)
+    - [Build, install, and test a kernel module](#build-install-and-test-a-kernel-module)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -47,6 +49,21 @@ hack_kernel_install.sh 1 # install kernel instance 1 with initramfs into `$HOME/
 hack_kernel_initramfs.sh 1 # optional, already done in hack_kernel_install.sh, need $ARENA
 hack_umount.sh 1 # umount `$HOME/image/mnt/` and diassociate `/dev/nbd1`
 # read kdb doc at https://www.kernel.org/doc/htmldocs/kgdb/index.html
+```
+#### QEMU GDBServer-based kernel test and debug (recommended)
+
+```bash
+# launch kernel instance 1 in QEMU with nested virtualization and kernel debugging support
+hack_kernel_test.sh 1 arch '' -enable-kvm -m 1024M -vnc :2 -cpu qemu64,+vmx -net nic -net user,hostfwd=tcp::5907-:5907
+```
+
+Connect to the guest machine through VNC port :2 (5902). Nested QEMU session can be observed at VNC port :7 (5907).
+
+`hack_kernel_debug.sh 1` should automatically break into the target kernel (with `target remote :1234`, matching the argument for QEMU's `-gdb` option in `hack_kernel_test.sh`). Use 'c' to release the target and `Ctrl-c` to break-in again. Refer to [kernel documentation](https://github.com/torvalds/linux/blob/master/Documentation/dev-tools/gdb-kernel-debugging.rst) for further information.
+
+#### Virtual-serial-port-based kernel test and debug (not recommended)
+
+```bash
 # launch kernel instance 1 in QEMU with nested virtualization and kernel debugging support
 hack_kernel_test.sh 1 arch 'kgdboc=kms,kbd,ttyS0,115200 kgdbwait kgdbcon' -enable-kvm -m 1024M -vnc :2 -cpu qemu64,+vmx -net nic -net user,hostfwd=tcp::5907-:5907 -serial pty
 ```
@@ -60,7 +77,7 @@ set remotebaud 115200
 target remote /dev/pts/nn
 ```
 
-In the guest, [break in to kgdb/kdb with `echo g > /proc/sysrq-trigger` as `root`](https://www.kernel.org/doc/htmldocs/kgdb/EnableKGDB.html). We can also [switch between kgdb and kdb](https://www.kernel.org/doc/htmldocs/kgdb/switchKdbKgdb.html).
+In the guest, [break in to kgdb/kdb with `echo g > /proc/sysrq-trigger` as `root`](http://landley.net/kdocs/Documentation/DocBook/xhtml-nochunks/kgdb.html#usingKDB). We can also [switch between kgdb and kdb](http://landley.net/kdocs/Documentation/DocBook/xhtml-nochunks/kgdb.html#idp1634992).
 
 ### Build, install, and test a kernel module
 
