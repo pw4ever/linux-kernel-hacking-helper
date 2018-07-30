@@ -17,4 +17,6 @@ if [[ -n "$par_job" ]]; then
     make_jobs="-j $par_job"
 fi
 
+pre_build_setup
+
 make ${make_jobs} O="${build_dir}"

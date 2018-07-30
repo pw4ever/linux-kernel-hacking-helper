@@ -40,3 +40,8 @@ aux_dir=${ARENA}/aux
 if [[ ! -d "${aux_dir}" ]]; then die "Auxiliary directory error."; fi
 }
 
+function pre_build_setup {
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1528020
+    # Kernel building does not like a custom CPATH.
+    unset CPATH
+}
