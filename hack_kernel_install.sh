@@ -25,7 +25,7 @@ if mountpoint ${target_dir} >/dev/null; then
     # do not clobber image's header files under /usr/include 
     #for i in modules_install firmware_install headers_install install; do
     for i in modules_install firmware_install install; do
-        make -j 4 -C "${build_dir}" O="${build_dir}" INSTALL_PATH="${target_dir}" INSTALL_MOD_PATH="${target_dir}" INSTALL_HDR_PATH="${target_dir}" $i
+        sudo make -j 4 -C "${build_dir}" O="${build_dir}" INSTALL_PATH="${target_dir}" INSTALL_MOD_PATH="${target_dir}" INSTALL_HDR_PATH="${target_dir}" $i
     done
     sudo mkinitcpio -g ${target_dir}/initramfs-linux -k ${target_dir}/vmlinuz -r ${target_dir} -c ${aux_dir}/mkinitcpio.conf
 else
