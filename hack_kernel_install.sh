@@ -13,7 +13,9 @@ init_build_dir "$target_inst"
 init_target_dir "$target_inst"
 init_aux_dir
 
-make -j 4 -C "${build_dir}" O="${build_dir}" INSTALL_PATH="${target_dir}" INSTALL_MOD_PATH="${target_dir}" INSTALL_HDR_PATH="${target_dir}" modules_install firmware_install headers_install install
+for i in modules_install firmware_install headers_install install; do
+    make -j 4 -C "${build_dir}" O="${build_dir}" INSTALL_PATH="${target_dir}" INSTALL_MOD_PATH="${target_dir}" INSTALL_HDR_PATH="${target_dir}" $i
+done
 
 mkinitcpio -g ${target_dir}/initramfs-linux -k ${target_dir}/vmlinuz -r ${target_dir} -c ${aux_dir}/mkinitcpio.conf
 
@@ -21,7 +23,10 @@ mkinitcpio -g ${target_dir}/initramfs-linux -k ${target_dir}/vmlinuz -r ${target
 target_dir=${HOME}/image/mnt
 if mountpoint ${target_dir} >/dev/null; then
     # do not clobber image's header files under /usr/include 
-    sudo make -j 3 -C "${build_dir}" O="${build_dir}" INSTALL_PATH="${target_dir}" INSTALL_MOD_PATH="${target_dir}/usr" modules_install firmware_install install
+    #for i in modules_install firmware_install headers_install install; do
+    for i in modules_install firmware_install install; do
+        make -j 4 -C "${build_dir}" O="${build_dir}" INSTALL_PATH="${target_dir}" INSTALL_MOD_PATH="${target_dir}" INSTALL_HDR_PATH="${target_dir}" $i
+    done
     sudo mkinitcpio -g ${target_dir}/initramfs-linux -k ${target_dir}/vmlinuz -r ${target_dir} -c ${aux_dir}/mkinitcpio.conf
 else
     die "${target_dir} not mounted with the image"
