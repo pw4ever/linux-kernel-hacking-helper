@@ -65,6 +65,20 @@ function vecho () { # verbose echo
     }
 }
 
+function getbin () { # get binary on path (best effort)
+    local bin=${1:-bash}
+    shift
+    local pkg=${1:-bash}
+    shift
+
+    type "$bin" > /dev/null 2>&1 || {
+        sudo pacman -S "$pkg" --noconfirm --needed
+    } || type "$bin" > /dev/null 2>&1 || {
+        >&2 echo -e "${TERM_FOREGROUND_ERROR}ERROR: Please install package $pkg, which has $bin.${TERM_FOREGROUND_DEFAULT}"
+        exit 1
+    }
+}
+
 #
 # Parsing command-line arguments.
 #
@@ -101,9 +115,11 @@ while true; do
             [[ -x "$_differ" ]] || unset _differ
             ;;
         -a|--abs)
-            _asp=$(type -p asp)
-            [[ -x "$_asp" ]] || { >&2 echo "Cannot find asp on PATH."; exit 1; }
-            asp checkout linux
+            _bin="asp"
+            _pkg="asp"
+            getbin "$_bin" "$_pkg"
+            "$_bin" checkout linux
+            unset _bin _pkg
             _trunkpath="linux/trunk"
             [[ -r "$_trunkpath/PKGBUILD"  ]] || { >&2 echo "Cannot checkout linux from ABS."; exit 1; }
             pushd "$_trunkpath" || { >&2 echo "Fail to enter $_trunkpath."; exit 1; }
@@ -209,15 +225,11 @@ END
 # Update package checksums.
 #
 
-_updpkgsums="updpkgsums"
-_deppkg="pacman-contrib"
-[[ -s "$(type -p $_updpkgsums)" ]] || {
-    sudo pacman -S pacman-contrib --noconfirm --needed
-} || {
-    >&2 echo -e "Install ${TERM_UNDERLINE}$_deppkg${TERM_NORMAL}, which has $_updpkgsums."
-}
-
-"$_updpkgsums" "$_PKGBUILD" 2> /dev/null || { >&2 echo "Failed to update package checksums."; exit 1; }
+_bin="updpkgsums"
+_pkg="pacman-contrib"
+getbin "$_bin" "$_pkg"
+"$_bin" "$_PKGBUILD" 2> /dev/null || { >&2 echo "Failed to update package checksums."; exit 1; }
+unset _bin _pkg
 vecho 0 <<END
 Updated source checksums in $_PKGBUILD.
 END
