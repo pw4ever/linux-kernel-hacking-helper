@@ -208,9 +208,15 @@ ln -sf "$_config" "$_mergeconfig"
 # Update package checksums.
 #
 
-updpkgsums "$_PKGBUILD" 2> /dev/null || {
-    >&2 echo "Failed to update package checksums."
+_updpkgsums="updpkgsums"
+_deppkg="pacman-contrib"
+[[ -s "$(type -p $_updpkgsums)" ]] || {
+    sudo pacman -S pacman-contrib --noconfirm --needed
+} || {
+    >&2 echo -e "Install ${TERM_UNDERLINE}$_deppkg${TERM_NORMAL}, which has $_updpkgsums."
 }
+
+"$_updpkgsums" "$_PKGBUILD" 2> /dev/null || { >&2 echo "Failed to update package checksums."; exit 1; }
 
 #
 # Diff.
