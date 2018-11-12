@@ -71,9 +71,9 @@ function getbin () { # get binary on path (best effort)
     local pkg=${1:-bash}
     shift
 
-    type "$bin" > /dev/null 2>&1 || {
+    type "$bin" >/dev/null 2>&1 || {
         sudo pacman -S "$pkg" --noconfirm --needed
-    } || type "$bin" > /dev/null 2>&1 || {
+    } || type "$bin" >/dev/null 2>&1 || {
         >&2 echo -e "${TERM_FOREGROUND_ERROR}ERROR: Please install package $pkg, which has $bin.${TERM_FOREGROUND_DEFAULT}"
         exit 1
     }
@@ -115,14 +115,16 @@ while true; do
             [[ -x "$_differ" ]] || unset _differ
             ;;
         -a|--abs)
+            exec 3>&1 1>/dev/null # temporarily suppress stdout
             _bin="asp"
             _pkg="asp"
             getbin "$_bin" "$_pkg"
-            "$_bin" checkout linux
+            "$_bin" checkout linux >/dev/null
             unset _bin _pkg
             _trunkpath="linux/trunk"
             [[ -r "$_trunkpath/PKGBUILD"  ]] || { >&2 echo "Cannot checkout linux from ABS."; exit 1; }
             pushd "$_trunkpath" || { >&2 echo "Fail to enter $_trunkpath."; exit 1; }
+            exec 1>&3 # restore stdout
             ;;
         -m|--makepkg)
             ((_makepkg++))
@@ -167,6 +169,9 @@ CONFIG_DEBUG_INFO_VTA=y
 
 # Default _qualifier.
 _qualifier=${_qualifier:-$_qualifier_default}
+
+# Default _qualifier.
+[[ _verbose > 0 ]] || exec 3>&1 1>/dev/null # suppress stdout if not verbose
 
 #
 # Sanity check.
@@ -214,7 +219,7 @@ END
 cp -f config "$_config"
 _mergeconfig=".config" # merge_config.sh writes to .config.
 ln -sf "$_config" "$_mergeconfig" 
-"${DIR}/scripts/merge_config.sh" -m "config" "${_kconfig[@]}" > /dev/null
+"${DIR}/scripts/merge_config.sh" -m "config" "${_kconfig[@]}" >/dev/null
 [[ -h "$_mergeconfig" ]] && rm -f "$_mergeconfig"
 [[ -x "$_editor" ]] && "$_editor" "$_config"
 vecho 0 <<END
@@ -228,7 +233,7 @@ END
 _bin="updpkgsums"
 _pkg="pacman-contrib"
 getbin "$_bin" "$_pkg"
-"$_bin" "$_PKGBUILD" 2> /dev/null || { >&2 echo "Failed to update package checksums."; exit 1; }
+"$_bin" "$_PKGBUILD" 2>/dev/null || { >&2 echo "Failed to update package checksums."; exit 1; }
 unset _bin _pkg
 vecho 0 <<END
 Updated source checksums in $_PKGBUILD.
@@ -252,4 +257,4 @@ END
 # Finalize.
 #
 
-[[ -n "$_trunkpath" ]] && popd > /dev/null
+[[ -n "$_trunkpath" ]] && popd >/dev/null
