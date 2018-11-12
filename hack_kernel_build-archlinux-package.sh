@@ -181,17 +181,15 @@ _file="config"
 _PKGBUILD="PKGBUILD.${_qualifier}"
 _config="config.${_qualifier}"
 
-vecho 0 <<END
-PKGBUILD: $_PKGBUILD
-config: $_config
-END
-
 #
 # $_PKGBUILD
 #
 
 perl -wpl -e "s|^(\\s*pkgbase=\\s*\\S*)(.*)\$|\$1-${_qualifier}\$2|; s|^(\\s*options=).*\$|\$1('!strip')|; s|^(\\s*)config\\b(.*)\$|\$1${_config}\$2|; s|^(\\s*cp\\s*\\.\\./)config\\b(.*)\$|\$1${_config}\$2|;" "PKGBUILD" > "$_PKGBUILD"
 [[ -x "$_editor" ]] && "$_editor" "$_PKGBUILD"
+vecho 0 <<END
+Patched PKGBUILD into $_PKGBUILD.
+END
 
 #
 # $_config
@@ -203,6 +201,9 @@ ln -sf "$_config" "$_mergeconfig"
 "${DIR}/scripts/merge_config.sh" -m "config" "${_kconfig[@]}" > /dev/null
 [[ -h "$_mergeconfig" ]] && rm -f "$_mergeconfig"
 [[ -x "$_editor" ]] && "$_editor" "$_config"
+vecho 0 <<END
+Merged Kconfig into $_config.
+END
 
 #
 # Update package checksums.
@@ -217,6 +218,9 @@ _deppkg="pacman-contrib"
 }
 
 "$_updpkgsums" "$_PKGBUILD" 2> /dev/null || { >&2 echo "Failed to update package checksums."; exit 1; }
+vecho 0 <<END
+Updated source checksums in $_PKGBUILD.
+END
 
 #
 # Diff.
@@ -236,4 +240,4 @@ _deppkg="pacman-contrib"
 # Finalize.
 #
 
-[[ -n "$_trunkpath" ]] && popd
+[[ -n "$_trunkpath" ]] && popd > /dev/null
