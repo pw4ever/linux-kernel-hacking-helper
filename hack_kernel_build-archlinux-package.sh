@@ -1,7 +1,7 @@
 #!/bin/bash - 
 
 _progname="$(basename $0)"
-_ver="0.1.1-dev"
+_ver="0.1.1"
 _author="Wei Peng <me@1pengw.com>"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
