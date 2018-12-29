@@ -1,0 +1,218 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+_ver="0.0.1-dev"
+#_author="Wei Peng <me@1pengw.com>"
+
+source "${_rootdir}/_shared_prologue"
+
+#
+# parameters
+#
+declare -a _kconfig=()
+declare _qualifier=${_qualifier:-"DEBUGINFO"}
+
+function getbin () { # get binary on path (best effort)
+    local bin=${1:-bash}
+    shift
+    local pkg=${1:-bash}
+    shift
+
+    type "$bin" >/dev/null 2>&1 || {
+        sudo pacman -S "$pkg" --noconfirm --needed
+    } || type "$bin" >/dev/null 2>&1 || {
+        >&2 echo -e "${TERM_FOREGROUND_ERROR}ERROR: Please install package $pkg, which has $bin.${TERM_FOREGROUND_DEFAULT}"
+        exit 1
+    }
+}
+
+#
+# getopt processing
+#
+function my_getopt_cont () {
+    local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    case "$1" in
+        -c|--config)
+            shift
+            _kconfig+=("$1")
+            n_shift=2
+            ;;
+        -q|--qualifier)
+            shift
+            _qualifier=$1
+            n_shift=2
+            ;;
+        -e|--editor)
+            shift
+            _editor=$(type -p "$1")
+            [[ -x "$_editor" ]] || _editor=$(type -p "${EDITOR:-vim}")
+            [[ -x "$_editor" ]] || _editor=$(type -p "vi")
+            [[ -x "$_editor" ]] || unset _editor
+            n_shift=2
+            ;;
+        -d|--diff)
+            shift
+            _differ=$(type -p "$1")
+            [[ -x "$_differ" ]] || _differ=$(type -p "${DIFF:-bcompare}")
+            [[ -x "$_differ" ]] || _differ=$(type -p "diff")
+            [[ -x "$_differ" ]] || unset _differ
+            n_shift=2
+            ;;
+        -a|--abs)
+            exec 3>&1 1>/dev/null # temporarily suppress stdout
+            _bin="asp"
+            _pkg="asp"
+            getbin "$_bin" "$_pkg"
+            "$_bin" checkout linux >/dev/null
+            unset _bin _pkg
+            _trunkpath="linux/trunk"
+            [[ -r "$_trunkpath/PKGBUILD"  ]] || { >&2 echo "Cannot checkout linux from ABS."; exit 1; }
+            pushd "$_trunkpath" || { >&2 echo "Fail to enter $_trunkpath."; exit 1; }
+            exec 1>&3 # restore stdout
+            n_shift=1
+            ;;
+        -m|--makepkg)
+            ((_makepkg++))
+            n_shift=1
+            ;;
+    esac
+    return $n_shift
+}
+
+my_getopt "q:e:d:am" "qualifier:,editor:,diff:,abs,makepkg" "my_getopt_cont" "Build Arch Linux kernel packages from Arch Build System (ABS) with selected configs." "$(
+cat <<END
+[-c|--config=<config>]* [-q|--qualifier=<qualifier>]
+    [-e|--editor=<editor>] [-d|--diff=<differ>]
+    [-a|--abs] [-m|--makepkg]
+END
+)" "$(
+cat <<END
+-c	--config		Kconfigs to merge; can be multiple (DEFAULT: With CONFIG_DEBUG_INFO).
+-q	--qualifier		Package name qualifier (DEFAULT: $_qualifier).
+-e	--editor		Edit build files as they are generated.
+-d	--diff			Diff generated build files with baseline.
+-a	--abs			Get baseline from Arch Build System (ABS).
+-m	--makepkg		Start makepkg.
+END
+)" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret 
+
+#
+# Fill in defaults.
+#
+
+# Default _kconfig.
+[[ ${#_kconfig[@]} -eq 0 ]] && {
+    _defconfig=$(mktemp /tmp/archlinux-linux_config_debug.XXXXXX);
+    echo '
+CONFIG_KPROBES=y
+CONFIG_KPROBES_SANITY_TEST=n
+CONFIG_KPROBE_EVENT=y
+CONFIG_NET_DCCPPROBE=m
+CONFIG_NET_SCTPPROBE=m
+CONFIG_NET_TCPPROBE=y
+CONFIG_DEBUG_INFO=y
+CONFIG_DEBUG_INFO_REDUCED=n
+CONFIG_X86_DECODER_SELFTEST=n
+CONFIG_DEBUG_INFO_VTA=y
+' > "$_defconfig";
+    [[ -r "$_defconfig" ]] || { >&2 echo "Fail to create default config."; exit 1; }
+    _kconfig=("$_defconfig")
+}
+
+#
+# suppress stdout if not verbose
+#
+
+(( _verbose > 0 )) || exec 3>&1 1>/dev/null
+
+#
+# sanity check
+#
+
+vecho 0 <<END
+$(
+dumpparam <<END1
+$(
+for name in config qualifier editor differ makepkg; do
+    echo "$name=$(echo $(eval "echo \$_$name"))"
+done
+)
+END1
+)
+END
+
+[[ -z "$CPATH" ]] || vecho 0 <<END
+${TERM_FOREGROUND_WARNING}WARNING: CPATH is defined as $CPATH${TERM_FOREGROUND_DEFAULT}
+END
+
+[[ -z "$LD_LIBRARY_PATH" ]] || vecho 0 <<END
+${TERM_FOREGROUND_WARNING}WARNING: LD_LIBRARY_PATH is defined as $LD_LIBRARY_PATH${TERM_FOREGROUND_DEFAULT}
+END
+
+_file="PKGBUILD"
+[[ -r "$_file" ]] || { >&2 echo "Cannot read $_file"; exit 1; }
+_file="config"
+[[ -r "$_file" ]] || { >&2 echo "Cannot read $_file"; exit 1; }
+
+_PKGBUILD="PKGBUILD.${_qualifier}"
+_config="config.${_qualifier}"
+
+#
+# $_PKGBUILD
+#
+
+perl -wpl -e "s|^(\\s*pkgbase=\\s*\\S*)(.*)\$|\$1-${_qualifier}\$2|; s|^(\\s*options=).*\$|\$1('!strip')|; s|^(\\s*)config\\b(.*)\$|\$1${_config}\$2|; s|^(\\s*cp\\s*\\.\\./)config\\b(.*)\$|\$1${_config}\$2|;" "PKGBUILD" > "$_PKGBUILD"
+[[ -x "$_editor" ]] && "$_editor" "$_PKGBUILD"
+vecho 0 <<END
+Patched PKGBUILD into $_PKGBUILD.
+END
+
+#
+# $_config
+#
+
+cp -f config "$_config"
+_mergeconfig=".config" # merge_config.sh writes to .config.
+ln -sf "$_config" "$_mergeconfig" 
+"$_rootdir/scripts/merge_config.sh" -m "config" "${_kconfig[@]}" >/dev/null
+[[ -h "$_mergeconfig" ]] && rm -f "$_mergeconfig"
+[[ -x "$_editor" ]] && "$_editor" "$_config"
+vecho 0 <<END
+Merged Kconfig into $_config.
+END
+
+#
+# Update package checksums.
+#
+
+_bin="updpkgsums"
+_pkg="pacman-contrib"
+getbin "$_bin" "$_pkg"
+"$_bin" "$_PKGBUILD" 2>/dev/null || { >&2 echo "Failed to update package checksums."; exit 1; }
+unset _bin _pkg
+vecho 0 <<END
+Updated source checksums in $_PKGBUILD.
+END
+
+#
+# Diff.
+#
+
+[[ -x "$_differ" ]] && "$_differ" "PKGBUILD" "$_PKGBUILD"
+[[ -x "$_differ" ]] && "$_differ" "config" "$_config"
+
+#
+# Build packages with makepkg.
+#
+
+(( _makepkg > 0 )) && makepkg -s -p "$_PKGBUILD" "$@"
+
+
+#
+# Finalize.
+#
+
+[[ -n "$_trunkpath" ]] && popd >/dev/null
