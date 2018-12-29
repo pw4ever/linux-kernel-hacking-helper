@@ -1,0 +1,143 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+_ver="0.0.1-dev"
+#_author="Wei Peng <me@1pengw.com>"
+
+source "${_rootdir}/_shared_prologue"
+
+#
+# parameters
+#
+declare -i _instance=${_instance:-1}
+declare -i _nbd=${_nbd:-1}
+declare -i _jobs=${_jobs:-$((2+$(nproc)))}
+
+#
+# getopt processing
+#
+function my_getopt_cont () {
+    local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    case "$1" in
+        -i|--instance)
+            shift
+            _instance=$1
+            n_shift=2
+            ;;
+        -n|--nbd)
+            shift
+            _nbd=$1
+            n_shift=2
+            ;;
+        -j|--jobs)
+            shift
+            _jobs=$1
+            n_shift=2
+            ;;
+    esac
+    return $n_shift
+}
+
+my_getopt "i:n:j:" "instance:,nbd:,jobs:" "my_getopt_cont" "Install built kernel instance, optionally into a mounted NBD image." "$(
+cat <<END
+[-i|--instance=<instance>] [-n|--nbd=<nbd>] [-j|--jobs=<jobs>]
+END
+)" "$(
+cat <<END
+-i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
+-n	--nbd		Network Block Device (NBD) for loop-mount the image (default: $_nbd).
+-j	--jobs		Number of parallel make jobs (default: $_jobs).
+END
+)" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret 
+
+# sanity check
+vecho 0 <<END
+$(
+dumpparam <<END1
+$(
+for name in instance nbd jobs; do
+    echo "$name=$(echo $(eval "echo \$_$name"))"
+done
+)
+END1
+)
+END
+
+#
+# Install into $LKHH_ARENA/target/$_instance
+#
+
+_target_dir="$LKHH_ARENA/target/$_instance"
+
+[[ -d "$_target_dir" ]] || die 1 <<END
+ERROR: $_target_dir does not exist; consider "lkhh-init -i $_instance" first.
+END
+
+if type -p mkinitcpio >/dev/null; then
+    dir="$LKHH_ARENA/aux"; file="$dir/mkinitcpio.conf"
+    for dir in "$LKHH_ARENA/aux" "$LKHH_BIN/aux"; do
+        file="$dir/mkinitcpio.conf"
+        if [[ -f "$file" ]]; then
+            _aux="$file"
+            break
+        fi
+    done
+
+    vmlinuz="$_target_dir/vmlinuz"
+
+    if [[ -f "$_aux" ]] && [[ -f "$vmlinuz" ]]; then
+        vecho 0 <<END
+mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
+END
+
+        mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
+    fi
+fi
+
+#
+# (Optional) Install into NBD image if mounted
+#
+
+nbd_device="/dev/nbd${_nbd}"
+[[ -b "$nbd_device" ]] || die 1 <<END
+ERROR: $nbd_device is not a block special device.
+END
+
+mnt="$LKHH_IMAGE/mnt/$_nbd"
+[[ -d "$mnt" ]] || die 1 <<END
+ERROR: $mnt is not an existing directory.
+END
+
+for exe in make sudo mountpoint; do
+    type -p $exe >/dev/null || die 1 <<END
+ERROR: $exe is not on PATH.
+END
+done
+
+if mountpoint "$mnt" >/dev/null; then
+    _target_dir="$mnt"
+
+    if type -p mkinitcpio >/dev/null; then
+        dir="$LKHH_ARENA/aux"; file="$dir/mkinitcpio.conf"
+        for dir in "$LKHH_ARENA/aux" "$LKHH_BIN/aux"; do
+            file="$dir/mkinitcpio.conf"
+            if [[ -f "$file" ]]; then
+                _aux="$file"
+                break
+            fi
+        done
+
+        vmlinuz="$_target_dir/vmlinuz"
+
+        if [[ -f "$_aux" ]] && [[ -f "$vmlinuz" ]]; then
+            vecho 0 <<END
+sudo mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
+END
+
+            sudo mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
+        fi
+    fi
+fi
