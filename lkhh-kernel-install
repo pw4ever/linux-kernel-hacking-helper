@@ -104,12 +104,14 @@ if type -p mkinitcpio >/dev/null; then
         fi
     done
 
-    if [[ -f "$_aux" ]]; then
+    vmlinuz="$_target_dir/vmlinuz"
+
+    if [[ -f "$_aux" ]] && [[ -f "$vmlinuz" ]]; then
         vecho 0 <<END
-mkinitcpio -g "$_target_dir/initramfs-linux" -k "$_target_dir/vmlinuz" -r "$_target_dir" -c "$_aux"
+mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
 END
 
-        mkinitcpio -g "$_target_dir/initramfs-linux" -k "$_target_dir/vmlinuz" -r "$_target_dir" -c "$_aux"
+        mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
     fi
 fi
 
@@ -152,15 +154,14 @@ END
             fi
         done
 
-        if [[ -f "$_aux" ]]; then
+        vmlinuz="$_target_dir/vmlinuz"
+
+        if [[ -f "$_aux" ]] && [[ -f "$vmlinuz" ]]; then
             vecho 0 <<END
-sudo mkinitcpio -g "$_target_dir/initramfs-linux" -k "$_target_dir/vmlinuz" -r "$_target_dir" -c "$_aux"
+sudo mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
 END
 
-            sudo mkinitcpio -g "$_target_dir/initramfs-linux" -k "$_target_dir/vmlinuz" -r "$_target_dir" -c "$_aux"
+            sudo mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
         fi
     fi
 fi
-
-vecho 0 <<END
-END
