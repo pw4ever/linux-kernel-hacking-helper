@@ -32,9 +32,10 @@ pushd "$LKHH_DIR"
 git clone https://github.com/pw4ever/linux-kernel-hacking-helper.git bin && export PATH="$LKHH_BIN:$PATH"
 popd
 
-lkhh-init -i 100 # or: lkhh-init --instance 100
+# see help: lkhh-init -h
+lkhh-init -i 10
 
-modprobe nbd max_part=16
+sudo modprobe nbd nbds_max=32 max_part=64
 ```
 
 ### Build, install, and test the kernel
@@ -44,15 +45,21 @@ Put a QEMU Linux OS image (e.g., a minimal [Arch Linux](https://www.archlinux.or
 Suppose they are `$HOME/image/arch.img` and `$HOME/image/arch.uuid` from now on, and the `root` flesystem (`/`; with `/usr` on the same partition with `/`) is `/dev/sda2` in `arch.img` ([Follow this page to download such an Arch Linux qcow2 image](https://github.com/pw4ever/linux-kernel-hacking-helper/releases/tag/arch-clean); `sudo`-able username/password: user/user).
 
 ```bash
-# cd $HOME/project/linux # cd into the directory of kernel source
-hack_kernel_config-init.sh 1 mrproper # clobber stale object files
-hack_kernel_config-init.sh 1 defconfig # config kernel with defconfig
-hack_kernel_config-merge.sh 1 $HOME/hacking/linux-kernel/helper/config/kgdb # merge kgdb support in config
-hack_kernel_build.sh 1 8 # build kernel instance 1 with 8 parallel jobs
-hack_mount.sh 1 arch 2 # mount `/dev/sda2` (the root partition) of `$HOME/image/arch.img` with host's `/dev/ndb1` onto `$HOME/image/mnt/`
-hack_kernel_install.sh 1 # install kernel instance 1 with initramfs into `$HOME/image/mnt/` (which has the mounted `$HOME/image/arch.img`)
-hack_kernel_initramfs.sh 1 # optional, already done in hack_kernel_install.sh, need $ARENA
-hack_umount.sh 1 # umount `$HOME/image/mnt/` and diassociate `/dev/nbd1`
+# pushd $HOME/project/linux # cd into the kernel source root (https://github.com/torvalds/linux)
+# see tool help: lkhh-kernel-make -h
+# see kernel make help: lkhh-kernel-make
+
+lkhh-kernel-make -i 1 -t clean  # remove generated files
+# lkhh-kernel-make -i 1 -t mrproper  # remove generated file + config + backup files
+lkhh-kernel-make -i 1 -t defconfig  # config kernel with defconfig
+lkhh-kernel-merge-config -i 1 $HOME/hacking/linux-kernel/helper/config/kgdb  # merge kgdb support in config
+lkhh-kernel-make -i 1 -j 8 -t all  # build kernel instance 1 with 8 parallel jobs
+
+lkhh-mount -n 3 -i arch -p 2  # mount '/dev/sda2' (the root partition) of '$LKHH_IMAGE/arch.img' with '/dev/ndb3' onto '$LKHH_IMAGE/mnt/3'
+lkhh-kernel-install -i 1 -n 3  # install kernel instance 1 into '$LKHH_IMAGE/mnt/3' (mounted image of '$LKHH_IMAGE/arch.img' as above)
+lkhh-kernel-initramfs -i 1 -n 3  # (optional w/ 'lkhh-kernel-install') install initramsf for kernel instance 1 into '$LKHH_IMAGE/mnt/3'
+lkhh-umount -n 3  # umount '$LKHH_IMAGE/mnt/3' and diassociate '/dev/nbd3'
+
 # read kdb doc at https://www.kernel.org/doc/htmldocs/kgdb/index.html
 ```
 #### QEMU GDBServer-based kernel test and debug (recommended)
