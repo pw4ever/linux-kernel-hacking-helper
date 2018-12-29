@@ -1,0 +1,134 @@
+#
+# https://misc.flogisoft.com/bash/tip_colors_and_formatting
+#
+TERM_NORMAL='\e[0m'
+TERM_BOLD='\e[1m'
+TERM_DIM='\e[2m'
+TERM_UNDERLINE='\e[4m'
+TERM_BLINK='\e[5m'
+
+TERM_FOREGROUND_DEFAULT='\e[39m'
+TERM_FOREGROUND_RED='\e[31m'
+TERM_FOREGROUND_GREEN='\e[32m'
+TERM_FOREGROUND_YELLOW='\e[33m'
+TERM_FOREGROUND_BLUE='\e[34m'
+TERM_FOREGROUND_MAGENTA='\e[35m'
+TERM_FOREGROUND_CYAN='\e[36m'
+
+TERM_FOREGROUND_NORMAL=$TERM_FOREGROUND_DEFAULT
+TERM_FOREGROUND_WARNING=$TERM_FOREGROUND_YELLOW
+TERM_FOREGROUND_ERROR=$TERM_FOREGROUND_RED
+
+#
+# show help
+#
+
+function showhelp () {
+    desc=$1; shift
+    optline=$1; shift
+    opttext=$1; shift
+    
+    cat <<END
+$_progname: $desc
+Version: $_ver
+Author: $_author
+
+$_progname $optline
+
+$opttext
+END
+}
+
+#
+# echo with verbosity threshold
+#
+
+function vecho () {
+    local level=${1:-0}
+
+    (( _verbose > level )) && {
+        cat - | while IFS= read -r line; do
+            echo -e $line
+        done
+    }
+}
+
+#
+# Exit with error code and message.
+#
+
+function die () {
+    >/dev/stderr cat -
+    exit ${1:-1}
+}
+
+#
+# Parsing command-line arguments.
+#
+
+function my_getopt () {
+    short_opt="${1}hv"; shift
+    long_opt="${1},help,verbose"; shift
+    cont=$1; shift # name to a function to continue processing options.
+
+    desc=$1; shift
+
+    optline=$(cat <<END
+$1
+    [-h|--help] [-v|--verbose]
+    [--] [<additional args>]
+END
+); shift
+
+    opttext=$(cat <<END
+$1
+-h	--help			Help, and you are reading it.
+-v	--verbose		Increase verbosity for each use.	
+END
+); shift
+
+    options=$(getopt -n "$_progname" -o "$short_opt" -l "$long_opt" -- "$@")
+
+    if [[ $? -ne 0 ]]; then
+        showhelp "$desc" "$optline" "$opttext"
+        die 1 <<END
+Error in parsing options.
+END
+    fi
+
+    eval set -- "$options"
+
+    while true; do
+        case "$1" in
+            -h|--help)
+                showhelp "$desc" "$optline" "$opttext"
+                shift
+                exit 0
+                ;;
+            -v|--verbose)
+                ((_verbose++))
+                shift
+                continue
+                ;;
+            --)
+                shift
+                break
+                ;;
+        esac
+
+        "$cont" "$@" # return the number of shifts to do next
+        for n in {1..$?}; do shift; done # TRICKY!
+    done
+}
+
+#
+# dump parameters (for sanity check)
+#
+
+function dumpparam () {
+    cat -
+    echo
+    for name in LKHH_DIR LKHH_BIN LKHH_ARENA LKHH_IMAGE; do
+        echo "export $name=$(echo $(eval "echo \${$name}"))"
+    done
+}

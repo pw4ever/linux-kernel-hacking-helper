@@ -1,0 +1,21 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+
+if [[ -z "$_rootdir" ]]; then
+    echo "Cannot derive root directory of the script $0" >&2
+    exit 1
+fi
+
+export LKHH_DIR=${LKHH_DIR:-$(dirname "$_rootdir")}
+export LKHH_BIN=${LKHH_BIN:-$_rootdir}
+export LKHH_ARENA=${LKHH_ARENA:-"$LKHH_DIR/arena"}
+export LKHH_IMAGE=${LKHH_IMAGE:-"$LKHH_DIR/image"}
+
+_progname=${_rpogname:-"$(basename $0)"}
+_ver=${_ver:-"0.0.1-dev"}
+_author=${_author:-"Wei Peng <me@1pengw.com>"}
+
+_verbose=0
+
+source "$_rootdir/_shared_lib"

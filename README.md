@@ -21,14 +21,19 @@ These scripts help set up multiple Linux kernel building instances and facilitat
 ### One-time setup
 
 ```bash
-mkdir -p $HOME/hacking/linux-kernel
-cd $HOME/hacking/linux-kernel
-git clone https://github.com/pw4ever/linux-kernel-hacking-helper.git helper
-mkdir -p $HOME/arena/linux
-export PATH=$HOME/hacking/linux-kernel/helper/:$PATH
-export ARENA=$HOME/arena/linux/
-hack_init.sh 100
-cp $HOME/hacking/linux-kernel/helper/aux/mkinitcpio.conf $ARENA/aux/
+export LKHH_DIR="$HOME/hacking/linux-kernel"
+export LKHH_BIN="$LKHH_DIR/bin"
+export LKHH_ARENA="$LKHH_DIR/arena"
+export LKHH_IMAGE="$LKHH_DIR/image"
+
+mkdir -p "$LKHH_DIR"
+
+pushd "$LKHH_DIR"
+git clone https://github.com/pw4ever/linux-kernel-hacking-helper.git bin && export PATH="$LKHH_BIN:$PATH"
+popd
+
+lkhh-init -i 100 # or: lkhh-init --instance 100
+
 modprobe nbd max_part=16
 ```
 
