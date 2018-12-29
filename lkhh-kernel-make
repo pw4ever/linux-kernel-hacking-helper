@@ -13,6 +13,9 @@ declare -i _instance=${_instance:-1}
 declare _target=${_target:-help}
 declare -i _jobs=${_jobs:-$((2+$(nproc)))}
 
+# see also: http://nickdesaulniers.github.io/blog/2018/06/02/speeding-up-linux-kernel-builds-with-ccache/
+declare -i _deterministic=${_deterministic:-0}
+
 #
 # getopt processing
 #
@@ -34,19 +37,25 @@ function my_getopt_cont () {
             _jobs=$1
             n_shift=2
             ;;
+        -d|--deterministic)
+            _deterministic=1
+            n_shift=1
+            ;;
     esac
     return $n_shift
 }
 
-my_getopt "i:t:j:" "instance:,target:,jobs:" "my_getopt_cont" "Make kernel instance." "$(
+my_getopt "i:t:j:d" "instance:,target:,jobs:,deterministic" "my_getopt_cont" "Make kernel instance." "$(
 cat <<END
 [-i|--instance=<instance>] [-t|--target=<target>] [-j|--jobs=<jobs>]
+	[-d|--deterministic]
 END
 )" "$(
 cat <<END
 -i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
 -t	--target		Makefile target to make (default: $_target).
 -j	--jobs		Number of parallel make jobs (default: $_jobs).
+-d	--deterministic		Deterministic build to leverage, e.g., ccache (default: $_deterministic).
 END
 )" "$@"
 ret=$?
@@ -58,7 +67,7 @@ vecho 0 <<END
 $(
 dumpparam <<END1
 $(
-for name in instance target jobs; do
+for name in instance target jobs deterministic; do
     echo "$name=$(echo $(eval "echo \$_$name"))"
 done
 )
@@ -75,5 +84,9 @@ END
 vecho 0 <<END
 make "O=$_build_dir" -j $_jobs "$@" "$_target"
 END
+
+if (( deterministic > 0 )); then
+    export KBUILD_BUILD_TIMESTAMP="1991-08-25" # Happy Birthday, Linux
+fi
 
 make "O=$_build_dir" -j $_jobs "$@" "$_target"
