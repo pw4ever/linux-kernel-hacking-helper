@@ -12,6 +12,9 @@ source "${_rootdir}/_shared_prologue"
 declare -a _kconfig=()
 declare _qualifier=${_qualifier:-"DEBUGINFO"}
 
+# see also: http://nickdesaulniers.github.io/blog/2018/06/02/speeding-up-linux-kernel-builds-with-ccache/
+declare -i _deterministic=${_deterministic:-0}
+
 function getbin () { # get binary on path (best effort)
     local bin=${1:-bash}
     shift
@@ -75,15 +78,19 @@ function my_getopt_cont () {
             ((_makepkg++))
             n_shift=1
             ;;
+        -d|--deterministic)
+            ((_deterministic++))
+            n_shift=1
+            ;;
     esac
     return $n_shift
 }
 
-my_getopt "q:e:d:am" "qualifier:,editor:,diff:,abs,makepkg" "my_getopt_cont" "Build Arch Linux kernel packages from Arch Build System (ABS) with selected configs." "$(
+my_getopt "q:e:d:amD" "qualifier:,editor:,diff:,abs,makepkg,deterministic" "my_getopt_cont" "Build Arch Linux kernel packages from Arch Build System (ABS) with selected configs." "$(
 cat <<END
 [-c|--config=<config>]* [-q|--qualifier=<qualifier>]
     [-e|--editor=<editor>] [-d|--diff=<differ>]
-    [-a|--abs] [-m|--makepkg]
+    [-a|--abs] [-m|--makepkg] [-D|--deterministic]
 END
 )" "$(
 cat <<END
@@ -93,6 +100,7 @@ cat <<END
 -d	--diff			Diff generated build files with baseline.
 -a	--abs			Get baseline from Arch Build System (ABS).
 -m	--makepkg		Start makepkg.
+-D	--deterministic		Deterministic build to leverage, e.g., ccache (default: $_deterministic).
 END
 )" "$@"
 ret=$?
@@ -207,6 +215,10 @@ END
 #
 # Build packages with makepkg.
 #
+
+if (( deterministic > 0 )); then
+    export KBUILD_BUILD_TIMESTAMP="1991-08-25" # Happy Birthday, Linux
+fi
 
 (( _makepkg > 0 )) && makepkg -s -p "$_PKGBUILD" "$@"
 
