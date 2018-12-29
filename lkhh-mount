@@ -1,0 +1,99 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+_ver="0.0.1-dev"
+#_author="Wei Peng <me@1pengw.com>"
+
+source "${_rootdir}/_shared_prologue"
+
+#
+# parameters
+#
+declare -i _nbd=${_nbd:-1}
+declare _image=${_image:-arch}
+declare _part=${_device:-2}
+
+#
+# getopt processing
+#
+function my_getopt_cont () {
+    local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    case "$1" in
+        -n|--nbd)
+            shift
+            _nbd=$1
+            n_shift=2
+            ;;
+        -i|--image)
+            shift
+            _image=$1
+            n_shift=2
+            ;;
+        -p|--part)
+            shift
+            _part=$1
+            n_shift=2
+            ;;
+    esac
+    return $n_shift
+}
+
+my_getopt "n:i:p:" "nbd:,image:,part:" "my_getopt_cont" "Mount OS root partition from image." "$(
+cat <<END
+[-n|--nbd=<nbd>] [-i|--image=<image>] [-p|--part=<partition>]
+END
+)" "$(
+cat <<END
+-n	--nbd		Network Block Device (NBD) for loop-mount the image (default: $_nbd).
+-i	--image		Image (.img) under $LKHH_IMAGE that hosts the OS (default: $_image).
+-p	--part		Root partition number inside the image (default: $_part).
+END
+)" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret 
+
+# sanity check
+vecho 0 <<END
+$(
+dumpparam <<END1
+$(
+for name in nbd image part; do
+    echo "$name=$(echo $(eval "echo \$_$name"))"
+done
+)
+END1
+)
+END
+
+image_path="$LKHH_IMAGE/$_image.img"
+[[ -f "$image_path" ]] || die 1 <<END
+ERROR: $image_path is not an existing regular file.
+END
+
+nbd_device="/dev/nbd${_nbd}"
+[[ -b "$nbd_device" ]] || die 1 <<END
+ERROR: $nbd_device is not a block special device.
+END
+
+mnt="$LKHH_IMAGE/mnt/$_nbd"
+mkdir -p "$mnt" 
+[[ -d "$mnt" ]] || die 1 <<END
+ERROR: $mnt is not an existing directory.
+END
+
+for exe in qemu-nbd partprobe sudo; do
+    type -p $exe >/dev/null || die 1 <<END
+ERROR: $exe is not on PATH.
+END
+done
+
+vecho 0 <<END
+sudo qemu-nbd -c "$nbd_device" "$image_path"
+sudo partprobe "$nbd_device"
+sudo mount "${nbd_device}p${_part}" "$mnt"
+END
+
+sudo qemu-nbd -c "$nbd_device" "$image_path"
+sudo partprobe "$nbd_device"
+sudo mount "${nbd_device}p${_part}" "$mnt"
