@@ -71,6 +71,7 @@ done
 
 vecho 0 <<END
 sudo umount "$mnt"
+rmdir "$mnt"
 sudo qemu-nbd -d "$nbd_device"
 END
 
