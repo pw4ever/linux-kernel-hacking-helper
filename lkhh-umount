@@ -1,0 +1,79 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+_ver="0.0.1-dev"
+#_author="Wei Peng <me@1pengw.com>"
+
+source "${_rootdir}/_shared_prologue"
+
+#
+# parameters
+#
+declare -i _nbd=${_nbd:-1}
+
+#
+# getopt processing
+#
+function my_getopt_cont () {
+    local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    case "$1" in
+        -n|--nbd)
+            shift
+            _nbd=$1
+            n_shift=2
+            ;;
+    esac
+    return $n_shift
+}
+
+my_getopt "n:" "nbd:" "my_getopt_cont" "Undo mounting OS root partition from image." "$(
+cat <<END
+[-n|--nbd=<nbd>]
+END
+)" "$(
+cat <<END
+-n	--nbd		Network Block Device (NBD) to undo the mounting (default: $_nbd).
+END
+)" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret
+
+# sanity check
+vecho 0 <<END
+$(
+dumpparam <<END1
+$(
+for name in nbd; do
+    echo "$name=$(echo $(eval "echo \$_$name"))"
+done
+)
+END1
+)
+END
+
+nbd_device="/dev/nbd${_nbd}"
+[[ -b "$nbd_device" ]] || die 1 <<END
+ERROR: $nbd_device is not a block special device.
+END
+
+mnt="$LKHH_IMAGE/mnt/$_nbd"
+mkdir -p "$mnt"
+[[ -d "$mnt" ]] || die 1 <<END
+ERROR: $mnt is not an existing directory.
+END
+
+for exe in qemu-nbd sudo; do
+    type -p $exe >/dev/null || die 1 <<END
+ERROR: $exe is not on PATH.
+END
+done
+
+vecho 0 <<END
+sudo umount "$mnt"
+sudo qemu-nbd -d "$nbd_device"
+END
+
+sudo umount "$mnt"
+rmdir "$mnt"
+sudo qemu-nbd -d "$nbd_device"
