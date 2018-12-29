@@ -1,0 +1,65 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+_ver="0.0.1-dev"
+#_author="Wei Peng <me@1pengw.com>"
+
+source "${_rootdir}/_shared_prologue"
+
+#
+# parameters
+#
+declare -i _instance=${_instance:-1}
+
+#
+# getopt processing
+#
+function my_getopt_cont () {
+    local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    case "$1" in
+        -i|--instance)
+            shift
+            _instance=$1
+            n_shift=2
+            ;;
+    esac
+    return $n_shift
+}
+
+my_getopt "i:" "instance:" "my_getopt_cont" "Merge kernel build configuration." "$(
+cat <<END
+[-i|--instance=<instance>]
+END
+)" "$(
+cat <<END
+-i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
+END
+)" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret 
+
+# sanity check
+vecho 0 <<END
+$(
+dumpparam <<END1
+$(
+for name in instance; do
+    echo "$name=$(echo $(eval "echo \$_$name"))"
+done
+)
+END1
+)
+END
+
+_build_dir="$LKHH_ARENA/build/$_instance"
+
+[[ -d "$_build_dir" ]] || die 1 <<END
+ERROR: $_build_dir does not exist; consider "lkhh-init -i $_instance" first.
+END
+
+vecho 0 <<END
+"$_rootdir/scripts/merge_config.sh" -m -O "$_build_dir" "${_build_dir}/.config" "$@"
+END
+
+"$_rootdir/scripts/merge_config.sh" -m -O "$_build_dir" "${_build_dir}/.config" "$@"
