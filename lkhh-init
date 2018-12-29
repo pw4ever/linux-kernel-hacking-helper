@@ -33,20 +33,27 @@ function my_getopt_cont () {
 
 my_getopt "i:d" "instance:,download" "my_getopt_cont" "One-time initialization for Linux Kernel Hacking Helper (LKHH)." "$(
 cat <<END
-[-i|--instance=<instance>] [-d|download]
+[-i|--instance=<instance>] [-d|--download]
 END
 )" "$(
 cat <<END
--i	--instance		Maximal number of kernel instances to prepare.
--d	--download		Download an OS image for testing.
+-i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
+-d	--download		Download an OS image for testing (default: $_download).
 END
 )" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret
 
 # sanity check
 vecho 0 <<END
 $(
 dumpparam <<END1
-instance=$_instance
+$(
+for name in instance download; do
+    echo "$name=$(echo $(eval "echo \$_$name"))"
+done
+)
 END1
 )
 END
