@@ -1,0 +1,77 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+_ver="0.0.1-dev"
+#_author="Wei Peng <me@1pengw.com>"
+
+source "${_rootdir}/_shared_prologue"
+
+#
+# parameters
+#
+declare -i _instance=${_instance:-1}
+declare _target=${_target:-help}
+declare -i _jobs=${_jobs:-$((2+$(nproc)))}
+
+#
+# getopt processing
+#
+function my_getopt_cont () {
+    local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    case "$1" in
+        -i|--instance)
+            shift
+            _instance=$1
+            n_shift=2
+            ;;
+        -t|--target)
+            shift
+            _target=$1
+            n_shift=2
+            ;;
+        -j|--jobs)
+            shift
+            _jobs=$1
+            n_shift=2
+            ;;
+    esac
+    return $n_shift
+}
+
+my_getopt "i:t:j:" "instance:,target:,jobs:" "my_getopt_cont" "Make kernel instance." "$(
+cat <<END
+[-i|--instance=<instance>] [-t|--target=<target>] [-j|--jobs=<jobs>]
+END
+)" "$(
+cat <<END
+-i	--instance		Maximal number of kernel instances to prepare (default to: $_instance).
+-t	--target		Makefile target to make (default to: $_target).
+-j	--jobs		Number of parallel make jobs (default to: $_jobs).
+END
+)" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret 
+
+# sanity check
+vecho 0 <<END
+$(
+dumpparam <<END1
+instance=$_instance
+target=$_target
+jobs=$_jobs
+END1
+)
+END
+
+_build_dir="$LKHH_ARENA/build/$_instance"
+
+[[ -d "$_build_dir" ]] || die 1 <<END
+ERROR: $_build_dir does not exist; consider "lkhh-init -i $_instance" first.
+END
+
+vecho 0 <<END
+make "O=$_build_dir" -j $_jobs "$@" "$_target"
+END
+
+make "O=$_build_dir" -j $_jobs "$@" "$_target"

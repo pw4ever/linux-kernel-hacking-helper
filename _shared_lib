@@ -87,7 +87,8 @@ $1
 END
 ); shift
 
-    options=$(getopt -n "$_progname" -o "$short_opt" -l "$long_opt" -- "$@")
+    # !!! _getopt is intentionally LEAKED out of this function.
+    _getopt=$(getopt -n "$_progname" -o "$short_opt" -l "$long_opt" -- "$@")
 
     if [[ $? -ne 0 ]]; then
         showhelp "$desc" "$optline" "$opttext"
@@ -96,29 +97,34 @@ Error in parsing options.
 END
     fi
 
-    eval set -- "$options"
+    eval set -- "$_getopt"
+
+    local n_shift=0
 
     while true; do
         case "$1" in
             -h|--help)
                 showhelp "$desc" "$optline" "$opttext"
-                shift
+                shift; ((n_shift++))
                 exit 0
                 ;;
             -v|--verbose)
                 ((_verbose++))
-                shift
+                shift; ((n_shift++))
                 continue
                 ;;
             --)
-                shift
+                shift; ((n_shift++))
                 break
                 ;;
         esac
 
         "$cont" "$@" # return the number of shifts to do next
-        for n in {1..$?}; do shift; done # TRICKY!
+        ret=$?
+        shift $ret; ((n_shift+=ret))
     done
+
+    return $n_shift
 }
 
 #
