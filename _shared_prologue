@@ -12,6 +12,10 @@ export LKHH_BIN=${LKHH_BIN:-$_rootdir}
 export LKHH_ARENA=${LKHH_ARENA:-"$LKHH_DIR/arena"}
 export LKHH_IMAGE=${LKHH_IMAGE:-"$LKHH_DIR/image"}
 
+# https://bugzilla.redhat.com/show_bug.cgi?id=1528020
+# Kernel building does not like a custom CPATH.
+unset CPATH
+
 _progname=${_rpogname:-"$(basename $0)"}
 _ver=${_ver:-"0.0.1-dev"}
 _author=${_author:-"Wei Peng <me@1pengw.com>"}
