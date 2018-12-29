@@ -50,7 +50,7 @@ function my_getopt_cont () {
     return $n_shift
 }
 
-my_getopt "i:I:c:s:g:" "instance:,image:,cmdline:system:gdb:" "my_getopt_cont" "Test kernel instance using OS image with QEMU." "$(
+my_getopt "i:I:c:s:g:" "instance:,image:,cmdline:,system:,gdb:" "my_getopt_cont" "Test kernel instance using OS image with QEMU." "$(
 cat <<END
 [-i|--instance=<instance>] [-I|--image=<image>]
 	[-c|--cmdline=<cmdline>] [-s|--system=<system>] [-g|--gdb=<gdb>]
