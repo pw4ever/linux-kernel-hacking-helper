@@ -44,9 +44,9 @@ cat <<END
 END
 )" "$(
 cat <<END
--i	--instance		Maximal number of kernel instances to prepare (default to: $_instance).
--t	--target		Makefile target to make (default to: $_target).
--j	--jobs		Number of parallel make jobs (default to: $_jobs).
+-i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
+-t	--target		Makefile target to make (default: $_target).
+-j	--jobs		Number of parallel make jobs (default: $_jobs).
 END
 )" "$@"
 ret=$?
@@ -57,9 +57,11 @@ shift $ret
 vecho 0 <<END
 $(
 dumpparam <<END1
-instance=$_instance
-target=$_target
-jobs=$_jobs
+$(
+for name in instance target jobs; do
+    echo "$name=$(echo $(eval "echo \$_$name"))"
+done
+)
 END1
 )
 END
