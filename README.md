@@ -64,12 +64,25 @@ lkhh-umount -n 3  # umount '$LKHH_IMAGE/mnt/3' and diassociate '/dev/nbd3'
 ```
 #### QEMU GDBServer-based kernel test and debug (recommended)
 
+Get help.
+
 ```bash
-# launch kernel instance 1 in QEMU with nested virtualization and kernel debugging support
-hack_kernel_test.sh 1 arch '' -enable-kvm -m 1024M -vnc :2 -cpu qemu64,+vmx -net nic -net user,hostfwd=tcp::5907-:5907
+lkhh-kernel-test-with-qemu -h
 ```
 
+A simple example using defaults (kernel instance 1, 'arch' OS image, no additional kernel cmdline, using 'x86_64' QEMU system emulator).
+
+```bash
+# launch kernel instance 1 with 'arch' OS image in QEMU
+# the parameters after '--' is passed directly to qemu-system-*
+lkhh-kernel-test-with-qemu -- -enable-kvm -m 2048M -cpu qemu64
+```
 Connect to the guest machine through VNC port :2 (5902). Nested QEMU session can be observed at VNC port :7 (5907).
+
+```bash
+# launch kernel instance 1 in QEMU with nested virtualization and kernel debugging support
+lkhh-kernel-test-with-qemu -i 1 -I arch -- -enable-kvm -m 2048M -vnc :2 -cpu host -net nic -net user,hostfwd=tcp::5907-:5907
+```
 
 `hack_kernel_debug.sh 1` should automatically break into the target kernel (with `target remote :1234`, matching the argument for QEMU's `-gdb` option in `hack_kernel_test.sh`). Use 'c' to release the target and `Ctrl-c` to break-in again. Refer to [kernel documentation](https://github.com/torvalds/linux/blob/master/Documentation/dev-tools/gdb-kernel-debugging.rst) for further information.
 

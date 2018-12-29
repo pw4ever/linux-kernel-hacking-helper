@@ -1,0 +1,112 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+_ver="0.0.1-dev"
+#_author="Wei Peng <me@1pengw.com>"
+
+source "${_rootdir}/_shared_prologue"
+
+#
+# parameters
+#
+declare -i _instance=${_instance:-1}
+declare _image=${_image:-arch}
+declare _cmdline=${_cmdline:-""}
+declare _system=${_system:-"x86_64"}
+declare _gdb=${_gdb:-"tcp::1234"}
+
+#
+# getopt processing
+#
+function my_getopt_cont () {
+    local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    case "$1" in
+        -i|--instance)
+            shift
+            _instance=$1
+            n_shift=2
+            ;;
+        -I|--image)
+            shift
+            _image=$1
+            n_shift=2
+            ;;
+        -c|--cmdline)
+            shift
+            _cmdline=$1
+            n_shift=2
+            ;;
+        -s|--system)
+            shift
+            _system=$1
+            n_shift=2
+            ;;
+        -g|--gdb)
+            shift
+            _gdb=$1
+            n_shift=2
+            ;;
+    esac
+    return $n_shift
+}
+
+my_getopt "i:I:c:s:g:" "instance:,image:,cmdline:system:gdb:" "my_getopt_cont" "Test kernel instance using OS image with QEMU." "$(
+cat <<END
+[-i|--instance=<instance>] [-I|--image=<image>]
+	[-c|--cmdline=<cmdline>] [-s|--system=<system>] [-g|--gdb=<gdb>]
+END
+)" "$(
+cat <<END
+-i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
+-I	--image		Image (.img) under $LKHH_IMAGE that hosts the OS (default: $_image).
+-c	--cmdline		Kernel cmdline (default: $_cmdline).
+-s	--system		QEMU system used for testing (default: $_system).
+-g	--gdb		QEMU GDB server device (refer to QEMU manpage; default: $_gdb).
+END
+)" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret
+
+# sanity check
+vecho 0 <<END
+$(
+dumpparam <<END1
+$(
+for name in instance image cmdline system gdb; do
+    echo "$name=$(echo $(eval "echo \$_$name"))"
+done
+)
+END1
+)
+END
+
+target_dir="$LKHH_ARENA/target/$_instance"
+[[ -d "$target_dir" ]] || die 1 <<END
+ERROR: $target_dir does not exist; consider "lkhh-init -i $_instance" first.
+END
+
+vmlinuz_path="$target_dir/vmlinuz"
+initrd_path="$target_dir/initramfs-linux"
+image_path="$LKHH_IMAGE/$_image.img"
+uuid_path="$LKHH_IMAGE/$_image.uuid"
+
+for i in "$vmlinuz_path" "$initrd_path" "$image_path" "$uuid_path"; do
+    [[ -f "$i" ]] || die 1 <<END
+ERROR: $i is not an existing regular file.
+END
+done
+
+qemu_system="qemu-system-${_system}"
+for exe in "$qemu_system"; do
+    type -p $exe >/dev/null || die 1 <<END
+ERROR: $exe is not on PATH.
+END
+done
+
+vecho 0 <<END
+eval "'$qemu_system'" -kernel "'$vmlinuz_path'" -initrd "'$initrd_path'" -hda "'$image_path'" "${_gdb:+-gdb '$_gdb'}" -append "'root=$(cat "$uuid_path") $_cmdline'" "$*"
+END
+
+unset IFS
+eval "'$qemu_system'" -kernel "'$vmlinuz_path'" -initrd "'$initrd_path'" -hda "'$image_path'" "${_gdb:+-gdb '$_gdb'}" -append "'root=$(cat "$uuid_path") $_cmdline'" "$*"
