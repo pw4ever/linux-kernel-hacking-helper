@@ -44,7 +44,7 @@ function my_getopt_cont () {
     return $n_shift
 }
 
-my_getopt "i:t:j:m:" "instance:,target:,jobs:,moduleroot:" "my_getopt_cont" "Make kernel instance." "$(
+my_getopt "i:t:j:m:" "instance:,target:,jobs:,moduleroot:" "my_getopt_cont" "Make and optionally install modules into kernel instance." "$(
 cat <<END
 [-i|--instance=<instance>] [-t|--target=<target>] [-j|--jobs=<jobs>]
     [-m|--moduleroot=<moduleroot>]
