@@ -11,7 +11,12 @@ source "${_rootdir}/_shared_prologue"
 #
 declare -i _instance=${_instance:-1}
 declare _image=${_image:-arch}
-declare _cmdline=${_cmdline:-""}
+
+# "nokaslr" is critical for resolving symbols in debug
+# see https://github.com/torvalds/linux/blob/master/Documentation/dev-tools/gdb-kernel-debugging.rst#setup
+# alternative: CONFIG_RANDOMIZE_BASE=n
+declare _cmdline=${_cmdline:-"nokaslr"}
+
 declare _system=${_system:-"x86_64"}
 declare _gdb=${_gdb:-"tcp::1234"}
 
