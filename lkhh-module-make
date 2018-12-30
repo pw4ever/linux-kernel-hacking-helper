@@ -13,6 +13,8 @@ declare -i _instance=${_instance:-1}
 declare _target=${_target:-modules}
 declare -i _jobs=${_jobs:-$((2+$(nproc)))}
 declare _moduleroot=${_moduleroot:-"$(readlink -f $PWD)"}
+declare -i _install=${_install:-0}
+declare -i _nbd=${_nbd:-1}
 
 #
 # getopt processing
@@ -40,14 +42,24 @@ function my_getopt_cont () {
             _moduleroot=$1
             n_shift=2
             ;;
+        -I|--install)
+            _install=1
+            n_shift=1
+            ;;
+        -n|--nbd)
+            shift
+            _nbd=$1
+            n_shift=2
+            ;;
     esac
     return $n_shift
 }
 
-my_getopt "i:t:j:m:" "instance:,target:,jobs:,moduleroot:" "my_getopt_cont" "Make and optionally install modules into kernel instance." "$(
+my_getopt "i:t:j:m:In:" "instance:,target:,jobs:,moduleroot:,install,nbd:" "my_getopt_cont" "Make and optionally install modules into kernel instance." "$(
 cat <<END
 [-i|--instance=<instance>] [-t|--target=<target>] [-j|--jobs=<jobs>]
-    [-m|--moduleroot=<moduleroot>]
+    [-m|--moduleroot=<moduleroot>] [-I|--install]
+    [-n|--nbd=<nbd>] 
 END
 )" "$(
 cat <<END
@@ -55,6 +67,8 @@ cat <<END
 -t	--target		Makefile target to make (default: $_target).
 -j	--jobs		Number of parallel make jobs (default: $_jobs).
 -m	--moduleroot		Root directory of the module, where "Makefile" is found (default: $_moduleroot).
+-I	--install		Install the module (default: $_install).
+-n	--nbd		Network Block Device (NBD) that has loop-mounted the OS image (default: $_nbd).
 END
 )" "$@"
 ret=$?
@@ -80,6 +94,12 @@ build_dir="$LKHH_ARENA/build/$_instance"
 ERROR: $build_dir does not exist; consider "lkhh-init -i $_instance" first.
 END
 
+target_dir="$LKHH_ARENA/target/$_instance"
+
+[[ -d "$target_dir" ]] || die 1 <<END
+ERROR: $target_dir does not exist; consider "lkhh-init -i $_instance" first.
+END
+
 moduleroot="$(readlink -f "$_moduleroot")"
 
 [[ -d "$moduleroot" ]] || die 1 <<END
@@ -91,3 +111,25 @@ make -C "$build_dir" -j "$_jobs" "O=$build_dir" "M=$moduleroot" "$@" "$_target"
 END
 
 make -C "$build_dir" -j "$_jobs" "O=$build_dir" "M=$moduleroot" "$@" "$_target"
+
+# If install is requested.
+if (( _install > 0 )); then
+
+    vecho 0 <<END
+make -C "$build_dir" -j "$_jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modules_install
+END
+
+    make -C "$build_dir" -j "$_jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modules_install
+
+    mnt="$LKHH_IMAGE/mnt/$_nbd"
+
+    if [[ -d "$mnt" ]] && mountpoint "$mnt" >/dev/null; then
+        target_dir="$mnt/usr"
+
+        vecho 0 <<END
+        sudo make -C "$build_dir" -j "$_jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modules_install
+END
+
+        sudo make -C "$build_dir" -j "$_jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modules_install
+    fi
+fi
