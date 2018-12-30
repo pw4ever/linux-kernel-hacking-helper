@@ -52,14 +52,14 @@ END1
 )
 END
 
-_build_dir="$LKHH_ARENA/build/$_instance"
+build_dir="$LKHH_ARENA/build/$_instance"
 
-[[ -d "$_build_dir" ]] || die 1 <<END
-ERROR: $_build_dir does not exist; consider "lkhh-init -i $_instance" first.
+[[ -d "$build_dir" ]] || die 1 <<END
+ERROR: $build_dir does not exist; consider "lkhh-init -i $_instance" first.
 END
 
 vecho 0 <<END
-"$_rootdir/scripts/merge_config.sh" -m -O "$_build_dir" "${_build_dir}/.config" "$@"
+"$_rootdir/scripts/merge_config.sh" -m -O "$build_dir" "${build_dir}/.config" "$@"
 END
 
-"$_rootdir/scripts/merge_config.sh" -m -O "$_build_dir" "${_build_dir}/.config" "$@"
+"$_rootdir/scripts/merge_config.sh" -m -O "$build_dir" "${build_dir}/.config" "$@"

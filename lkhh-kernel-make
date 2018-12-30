@@ -75,18 +75,18 @@ END1
 )
 END
 
-_build_dir="$LKHH_ARENA/build/$_instance"
+build_dir="$LKHH_ARENA/build/$_instance"
 
-[[ -d "$_build_dir" ]] || die 1 <<END
-ERROR: $_build_dir does not exist; consider "lkhh-init -i $_instance" first.
+[[ -d "$build_dir" ]] || die 1 <<END
+ERROR: $build_dir does not exist; consider "lkhh-init -i $_instance" first.
 END
 
 vecho 0 <<END
-make "O=$_build_dir" -j $_jobs "$@" "$_target"
+make "O=$build_dir" -j $_jobs "$@" "$_target"
 END
 
 if (( deterministic > 0 )); then
     export KBUILD_BUILD_TIMESTAMP="1991-08-25" # Happy Birthday, Linux
 fi
 
-make "O=$_build_dir" -j $_jobs "$@" "$_target"
+make "O=$build_dir" -j $_jobs "$@" "$_target"

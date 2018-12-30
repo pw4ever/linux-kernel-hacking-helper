@@ -70,10 +70,10 @@ END
 # Install into $LKHH_ARENA/target/$_instance
 #
 
-_target_dir="$LKHH_ARENA/target/$_instance"
+target_dir="$LKHH_ARENA/target/$_instance"
 
-[[ -d "$_target_dir" ]] || die 1 <<END
-ERROR: $_target_dir does not exist; consider "lkhh-init -i $_instance" first.
+[[ -d "$target_dir" ]] || die 1 <<END
+ERROR: $target_dir does not exist; consider "lkhh-init -i $_instance" first.
 END
 
 if type -p mkinitcpio >/dev/null; then
@@ -86,14 +86,14 @@ if type -p mkinitcpio >/dev/null; then
         fi
     done
 
-    vmlinuz="$_target_dir/vmlinuz"
+    vmlinuz="$target_dir/vmlinuz"
 
     if [[ -f "$_aux" ]] && [[ -f "$vmlinuz" ]]; then
         vecho 0 <<END
-mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
+mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux"
 END
 
-        mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
+        mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux"
     fi
 fi
 
@@ -118,7 +118,7 @@ END
 done
 
 if mountpoint "$mnt" >/dev/null; then
-    _target_dir="$mnt"
+    target_dir="$mnt"
 
     if type -p mkinitcpio >/dev/null; then
         dir="$LKHH_ARENA/aux"; file="$dir/mkinitcpio.conf"
@@ -130,14 +130,14 @@ if mountpoint "$mnt" >/dev/null; then
             fi
         done
 
-        vmlinuz="$_target_dir/vmlinuz"
+        vmlinuz="$target_dir/vmlinuz"
 
         if [[ -f "$_aux" ]] && [[ -f "$vmlinuz" ]]; then
             vecho 0 <<END
-sudo mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
+sudo mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux"
 END
 
-            sudo mkinitcpio -g "$_target_dir/initramfs-linux" -k "$vmlinuz" -r "$_target_dir" -c "$_aux"
+            sudo mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux"
         fi
     fi
 fi
