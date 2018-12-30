@@ -75,7 +75,7 @@ A simple example using defaults (kernel instance 1, 'arch' OS image, no addition
 ```bash
 # launch kernel instance 1 with 'arch' OS image in QEMU
 # the parameters after '--' is passed directly to qemu-system-*
-lkhh-kernel-test-with-qemu -- -enable-kvm -m 2048M -cpu qemu64
+lkhh-kernel-test-with-qemu -- -enable-kvm -m 2048M
 ```
 Connect to the guest machine through VNC port :2 (5902). Nested QEMU session can be observed at VNC port :7 (5907).
 
@@ -84,31 +84,47 @@ Connect to the guest machine through VNC port :2 (5902). Nested QEMU session can
 lkhh-kernel-test-with-qemu -i 1 -I arch -- -enable-kvm -m 2048M -vnc :2 -cpu host -net nic -net user,hostfwd=tcp::5907-:5907
 ```
 
-`hack_kernel_debug.sh 1` should automatically break into the target kernel (with `target remote :1234`, matching the argument for QEMU's `-gdb` option in `hack_kernel_test.sh`). Use 'c' to release the target and `Ctrl-c` to break-in again. Refer to [kernel documentation](https://github.com/torvalds/linux/blob/master/Documentation/dev-tools/gdb-kernel-debugging.rst) for further information.
+`lkhh-kernel-debug -i <N>` will launch a GDB session with matching symbols (assuming debug support is properly configured for the kernel before building; see [here](https://github.com/torvalds/linux/blob/master/Documentation/dev-tools/gdb-kernel-debugging.rst#setup) for hints on `CONFIG_*`; `lkhh-kernel-merge-config -i 1 -- "$LKHH_BIN/config/debug"` can help here) to break into the corresponding QEMU instance launched by `lkhh-kernel-test-with-qemu -i <N>`.
+
+```bash
+# launch GDB session for the default (1) kernel instance
+lkhh-kernel-debug
+
+# being explicit
+lkhh-kernel-debug -i 1
+```
+
+By default, `lkhh-kernel-test-with-qemu` and `lkhh-kernel-debug` will use TCP port 1234 as GDB server port. This can be changed by the `-g` parameter for both commands. Use `-h` for help as always.
+
+Once in the GDB session, use 'c' to release the target and `Ctrl-c` to break-in again. Refer to [kernel documentation](https://github.com/torvalds/linux/blob/master/Documentation/dev-tools/gdb-kernel-debugging.rst) for further information.
 
 #### Virtual-serial-port-based kernel test and debug (not recommended)
 
+Suppose `lkhh-kernel-merge-config $LKHH_BIN/config/kgdb` has been used to merge `kgdb` and `kdb` support prior to kernel building using `lkhh-ernel-make -t all`.
+
+Suppose nested virtualization is [enabled](https://www.kernel.org/doc/Documentation/virtual/kvm/nested-vmx.txt) (i.e., `kvm-intel` is loaded with `nested=1`).
+
 ```bash
 # launch kernel instance 1 in QEMU with nested virtualization and kernel debugging support
-hack_kernel_test.sh 1 arch 'kgdboc=kms,kbd,ttyS0,115200 kgdbwait kgdbcon' -enable-kvm -m 1024M -vnc :2 -cpu qemu64,+vmx -net nic -net user,hostfwd=tcp::5907-:5907 -serial pty
+lkhh-kernel-test-with-qemu -i 1 -I arch -c 'kgdboc=kms,kbd,ttyS0,115200 kgdbwait kgdbcon' -- -enable-kvm -m 2048M -vnc :2 -cpu qemu64,+vmx -net nic -net user,hostfwd=tcp::5907-:5907 -serial pty
 ```
 
-Connect to the guest machine through VNC port :2 (5902) and PTY device `/dev/pts/nn` (nn is some integer; this will be printed out by QEMU; QEMU doc says pty is available only on Linux). Nested QEMU session can be observed at VNC port :7 (5907).
+Connect to the guest machine through VNC port :2 (5902) and PTY device `/dev/pts/<nn>` (`<nn>` is some integer; this will be printed out by QEMU; QEMU doc says pty is available only on Linux). Nested QEMU session can be observed at VNC port :7 (5907).
 
-After `hack_kernel_debug.sh 1` and enter GDB:
+After `lkhh-kernel-debug -i 1 -g /dev/pts/<nn> -- -b 115200` to enter the GDB debug session. This is equivalent to the following GDB commands:
 
 ```bash
 set remotebaud 115200
-target remote /dev/pts/nn
+target remote /dev/pts/<nn>
 ```
 
-In the guest, [break in to kgdb/kdb with `echo g > /proc/sysrq-trigger` as `root`](http://landley.net/kdocs/Documentation/DocBook/xhtml-nochunks/kgdb.html#usingKDB). We can also [switch between kgdb and kdb](http://landley.net/kdocs/Documentation/DocBook/xhtml-nochunks/kgdb.html#idp1634992).
+In the guest, [break in](http://landley.net/kdocs/Documentation/DocBook/xhtml-nochunks/kgdb.html#usingKDB) to kgdb/kdb with `echo g > /proc/sysrq-trigger` as `root`. We can also [switch](http://landley.net/kdocs/Documentation/DocBook/xhtml-nochunks/kgdb.html#idp1634992) between kgdb and kdb.
 
 ### Build, install, and test a kernel module
 
 ```bash
 hack_mod_build.sh 1 8 # build with kernel instance 1 in 8 parallel jobs
 hack_mount.sh 1 arch 2 # if needed; see above
-hack_mod_install.sh 1 # install into kernel instance 1 
+hack_mod_install.sh 1 # install into kernel instance 1
 hack_umount.sh 1 # if needed; see above
 ```
