@@ -123,8 +123,7 @@ In the guest, [break in](http://landley.net/kdocs/Documentation/DocBook/xhtml-no
 ### Build, install, and test a kernel module
 
 ```bash
-hack_mod_build.sh 1 8 # build with kernel instance 1 in 8 parallel jobs
-hack_mount.sh 1 arch 2 # if needed; see above
-hack_mod_install.sh 1 # install into kernel instance 1
-hack_umount.sh 1 # if needed; see above
+# lkhh-mount # if needed; see usage above
+lkhh-module-make -i 1 -I # build module with kernel instance 1 ("-i 1") and install the module ("-I")
+# lkhh-umount # if needed; see usage above
 ```
