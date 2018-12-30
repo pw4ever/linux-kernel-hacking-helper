@@ -16,7 +16,7 @@ export LKHH_IMAGE=${LKHH_IMAGE:-"$LKHH_DIR/image"}
 # Kernel building does not like a custom CPATH.
 unset CPATH
 
-_progname=${_rpogname:-"$(basename $0)"}
+_progname=${_progname:-"$(basename $0)"}
 _ver=${_ver:-"0.0.1-dev"}
 _author=${_author:-"Wei Peng <me@1pengw.com>"}
 
