@@ -78,9 +78,9 @@ ls -d "$build_root"/* | sort -V | while IFS= read -r line; do
         output+="\tbuilt";
         if [[ -f "$line/.config" ]]; then
             if [[ "$line/vmlinux" -nt "$line/.config" ]]; then
-                output+="(vmlinux is older than .config)"
+                output+="(vmlinux is up to date with .config)"
             elif [[ "$line/vmlinux" -ot "$line/.config" ]]; then
-                output+="(vmlinux is newer than .config)"
+                output+="(vmlinux is older than .config)"
             fi
         fi
     fi
