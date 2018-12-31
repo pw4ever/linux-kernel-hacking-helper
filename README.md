@@ -142,14 +142,14 @@ In all examples below, assume `lkhh-init -i 10` was used, instance 1 was configu
 List all non-empty instances.
 ```bash
 lkhh-kernel-list
-#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is newer than .config)
+#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is older than .config)
 #2:	configured	source@(/home/wei/upstream/linux)
 ```
 
 List all instances, including empty ones
 ```bash
 lkhh-kernel-list -a
-#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is newer than .config)
+#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is older than .config)
 #2:	configured	source@(/home/wei/upstream/linux)
 #3:
 #4:
@@ -163,7 +163,7 @@ lkhh-kernel-list -a
 List path for each instance build directory.
 ```bash
 lkhh-kernel-list -a --foreach 'xargs'
-#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is newer than .config)
+#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is older than .config)
 #/home/wei/hacking/linux-kernel/arena/build/1
 #2:	configured	source@(/home/wei/upstream/linux)
 #/home/wei/hacking/linux-kernel/arena/build/2
@@ -187,8 +187,8 @@ lkhh-kernel-list -a --foreach 'xargs'
 
 List contents for each instance build directory.
 ```bash
-lkhh-kernel-list -a --foreach 'xargs ls'
-#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is newer than .config)
+lkhh-kernel-list -a --foreach 'xargs ls -am'
+#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is older than .config)
 #., .., .16063.dwo, .16070.dwo, .16077.dwo, .16084.dwo, .16091.dwo, .16098.dwo,
 #.16105.dwo, .16112.dwo, .16122.dwo, .16132.dwo, .16139.dwo, .16146.dwo,
 #.16153.dwo, .16160.dwo, .16167.dwo, .16177.dwo, .16999.dwo, .17032.dwo,
