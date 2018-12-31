@@ -1,0 +1,96 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+_ver="0.0.1-dev"
+#_author="Wei Peng <me@1pengw.com>"
+
+source "${_rootdir}/_shared_prologue"
+
+#
+# parameters
+#
+declare -i _all=${_all:-0}
+declare _foreach=${_foreach:-}
+
+#
+# getopt processing
+#
+function my_getopt_cont () {
+    local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    case "$1" in
+        -a|--all)
+            _all=1
+            n_shift=1
+            ;;
+        -f|--foreach)
+            shift
+            _foreach=$1
+            n_shift=2
+            ;;
+    esac
+    return $n_shift
+}
+
+my_getopt "af:" "all,foreach:" "my_getopt_cont" "List state of build/target instances." "$(
+cat <<END
+[-a|--all] [-f|--foreach=<foreach>]
+END
+)" "$(
+cat <<END
+-a	--all		List all initialized instances, not only non-empty ones (default: $_all).
+-f	--foreach		A snippet of shell script to be eval'd, which takes each build path from stdin (default: $_foreach).
+END
+)" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret 
+
+# sanity check
+vecho 0 <<END
+$(
+dumpparam <<END1
+$(
+for name in all foreach; do
+    echo "$name=$(echo $(eval "echo \$_$name"))"
+done
+)
+END1
+)
+END
+
+build_root="$(readlink -f "$LKHH_ARENA/build")"
+
+[[ -d "$build_root" ]] || die 1 <<END
+ERROR: $build_root does not exist; consider "lkhh-init" first.
+END
+
+vecho 0 <<END
+$build_root
+END
+
+ls -d "$build_root"/* | sort -V | while IFS= read -r line; do
+    n=${line##$build_root/}
+    output_p=0
+    output="$n:"
+    if [[ -f "$line/.config" ]]; then output+="\tconfigured"; (( output_p++ )); fi
+    if [[ -h "$line/source" ]]; then output+="\tsource@($(readlink -f "$line/source"))"; (( output_p++ )); fi
+    if [[ -f "$line/vmlinux" ]]; then
+        output+="\tbuilt";
+        if [[ -f "$line/.config" ]]; then
+            if [[ "$line/vmlinux" -nt "$line/.config" ]]; then
+                output+="(vmlinux is older than .config)"
+            elif [[ "$line/vmlinux" -ot "$line/.config" ]]; then
+                output+="(vmlinux is newer than .config)"
+            fi
+        fi
+    fi
+    output+="\n"
+
+    if (( output_p > 0 )) || (( _all > 0 )); then
+        printf "$output"
+    fi
+
+    if [[ -n "$_foreach" ]]; then
+        eval "echo '$line' | $_foreach"
+    fi
+done
