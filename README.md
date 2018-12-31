@@ -36,6 +36,9 @@ popd
 
 # see help: lkhh-init -h
 lkhh-init -i 10
+# (optional) in addition to initialize 10 build instances, also download and decompress a testing OS image `arch-clean.{img,uuid}` into `$LKHH_IMAGE`
+# lkhh-init -i 10 -d
+# recommendation is to rename `arch-clean.{img,uuid}` into `arch.{img,uuid}` for testing below
 
 sudo modprobe nbd nbds_max=32 max_part=64
 ```
