@@ -9,6 +9,8 @@
       - [QEMU GDBServer-based kernel test and debug (recommended)](#qemu-gdbserver-based-kernel-test-and-debug-recommended)
       - [Virtual-serial-port-based kernel test and debug (not recommended)](#virtual-serial-port-based-kernel-test-and-debug-not-recommended)
     - [Build, install, and test a kernel module](#build-install-and-test-a-kernel-module)
+- [Tips](#tips)
+  - [List state of and optionally act on each kernel build instance](#list-state-of-and-optionally-act-on-each-kernel-build-instance)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -37,6 +39,7 @@ lkhh-init -i 10
 
 sudo modprobe nbd nbds_max=32 max_part=64
 ```
+
 
 ### Build, install, and test the kernel
 
@@ -126,4 +129,116 @@ In the guest, [break in](http://landley.net/kdocs/Documentation/DocBook/xhtml-no
 # lkhh-mount # if needed; see usage above
 lkhh-module-make -i 1 -I # build module with kernel instance 1 ("-i 1") and install the module ("-I")
 # lkhh-umount # if needed; see usage above
+```
+
+# Tips
+
+## List state of and optionally act on each kernel build instance
+
+After using `lkhh-init` to set up instances of kernel build, using `lkhh-kernel-list`  to find out the state of and optionally act on each of the instance.
+
+In all examples below, assume `lkhh-init -i 10` was used, instance 1 was configured and built, and instance 2 was configured only.
+
+List all non-empty instances.
+```bash
+lkhh-kernel-list
+#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is newer than .config)
+#2:	configured	source@(/home/wei/upstream/linux)
+```
+
+List all instances, including empty ones
+```bash
+lkhh-kernel-list -a
+#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is newer than .config)
+#2:	configured	source@(/home/wei/upstream/linux)
+#3:
+#4:
+#5:
+#6:
+#7:
+#8:
+#9:
+#10:
+```
+List path for each instance build directory.
+```bash
+lkhh-kernel-list -a --foreach 'xargs'
+#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is newer than .config)
+#/home/wei/hacking/linux-kernel/arena/build/1
+#2:	configured	source@(/home/wei/upstream/linux)
+#/home/wei/hacking/linux-kernel/arena/build/2
+#3:
+#/home/wei/hacking/linux-kernel/arena/build/3
+#4:
+#/home/wei/hacking/linux-kernel/arena/build/4
+#5:
+#/home/wei/hacking/linux-kernel/arena/build/5
+#6:
+#/home/wei/hacking/linux-kernel/arena/build/6
+#7:
+#/home/wei/hacking/linux-kernel/arena/build/7
+#8:
+#/home/wei/hacking/linux-kernel/arena/build/8
+#9:
+#/home/wei/hacking/linux-kernel/arena/build/9
+#10:
+#/home/wei/hacking/linux-kernel/arena/build/10
+```
+
+List contents for each instance build directory.
+```bash
+lkhh-kernel-list -a --foreach 'xargs ls'
+#1:	configured	source@(/home/wei/upstream/linux)	built(vmlinux is newer than .config)
+#., .., .16063.dwo, .16070.dwo, .16077.dwo, .16084.dwo, .16091.dwo, .16098.dwo,
+#.16105.dwo, .16112.dwo, .16122.dwo, .16132.dwo, .16139.dwo, .16146.dwo,
+#.16153.dwo, .16160.dwo, .16167.dwo, .16177.dwo, .16999.dwo, .17032.dwo,
+#.17074.dwo, .17284.dwo, .17468.dwo, .17813.dwo, .17928.dwo, .18171.dwo,
+#.18835.dwo, .19492.dwo, .19665.dwo, .19836.dwo, .20036.dwo, .20205.dwo,
+#.20449.dwo, .22240.dwo, .22242.dwo, .22326.dwo, .22373.dwo, .22626.dwo,
+#.22656.dwo, .22690.dwo, .23615.dwo, .24026.dwo, .24050.dwo, .24077.dwo,
+#.24336.dwo, .24359.dwo, .24375.dwo, .28829.dwo, .39890.dwo, .39919.dwo,
+#.39947.dwo, .48315.dwo, .48334.dwo, .48341.dwo, .48354.dwo, .48365.dwo,
+#.48372.dwo, .50078.dwo, .50118.dwo, .50146.dwo, .61848.dwo, .61887.dwo,
+#.61905.dwo, .70589.dwo, .70596.dwo, .70603.dwo, .70610.dwo, .70617.dwo,
+#.70624.dwo, .70631.dwo, .70638.dwo, .70645.dwo, .70652.dwo, .70659.dwo,
+#.70666.dwo, .70673.dwo, .70680.dwo, .70687.dwo, .70702.dwo, .71326.dwo,
+#.71333.dwo, .71340.dwo, .71347.dwo, .71354.dwo, .71361.dwo, .71368.dwo,
+#.71375.dwo, .71382.dwo, .71389.dwo, .71396.dwo, .71403.dwo, .71410.dwo,
+#.71417.dwo, .71424.dwo, .71434.dwo, .71681.dwo, .71719.dwo, .71744.dwo,
+#.71906.dwo, .72020.dwo, .72186.dwo, .72218.dwo, .72351.dwo, .72692.dwo,
+#.72752.dwo, .72972.dwo, .73153.dwo, .73361.dwo, .73543.dwo, .73711.dwo,
+#.74664.dwo, .74697.dwo, .74818.dwo, .74821.dwo, .74854.dwo, .74883.dwo,
+#.74892.dwo, .74925.dwo, .74977.dwo, .75270.dwo, .75276.dwo, .75852.dwo,
+#.76194.dwo, .76311.dwo, .76351.dwo, .76403.dwo, .76487.dwo, .76603.dwo,
+#.77042.dwo, .77055.dwo, .77566.dwo, .77573.dwo, .77580.dwo, .77587.dwo,
+#.77594.dwo, .77601.dwo, .77614.dwo, .77621.dwo, .77628.dwo, .77635.dwo,
+#.77642.dwo, .77650.dwo, .77657.dwo, .77664.dwo, .77671.dwo, .77681.dwo,
+#.78046.dwo, .78078.dwo, .78183.dwo, .78185.dwo, .78232.dwo, .78262.dwo,
+#.78279.dwo, .78309.dwo, .78358.dwo, .78512.dwo, .78604.dwo, .79460.dwo,
+#.79546.dwo, .79618.dwo, .79655.dwo, .79720.dwo, .79856.dwo, .79952.dwo,
+#.80462.dwo, .80475.dwo, .config, .config.old, .missing-syscalls.d,
+#.tmp_System.map, .tmp_kallsyms1.S, .tmp_kallsyms1.o, .tmp_kallsyms2.S,
+#.tmp_kallsyms2.o, .tmp_versions, .tmp_vmlinux1, .tmp_vmlinux2, .version,
+#.vmlinux.cmd, Makefile, Module.symvers, System.map, arch, block, built-in.a,
+#certs, crypto, drivers, firmware, fs, include, init, ipc, kernel, lib, mm,
+#modules.builtin, modules.order, net, scripts, security, sound, source, tools,
+#usr, virt, vmlinux, vmlinux-gdb.py, vmlinux.o
+#2:	configured	source@(/home/wei/upstream/linux)
+#., .., .config, Makefile, include, scripts, source
+#3:
+#., ..
+#4:
+#., ..
+#5:
+#., ..
+#6:
+#., ..
+#7:
+#., ..
+#8:
+#., ..
+#9:
+#., ..
+#10:
+#., ..
 ```
