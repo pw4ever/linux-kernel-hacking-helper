@@ -28,12 +28,12 @@
 ## Out of scope
 
 - Set up kernel/module build dependencies on your distro.
-- [Comprehensively document](https://github.com/cirosantilli/linux-kernel-module-cheat) on building/testing kernel/LKHs on various architectures/environments.
+- [Comprehensively document](https://github.com/cirosantilli/linux-kernel-module-cheat) building/testing kernel/LKHs on various architectures/environments.
 
 
 # Cheatsheet
 
-Follow [one-time setup](#one-time-setup) to clone the repo, get testing OS qcow2 image, and (optional but recommended) setting up environment variable.
+Follow [one-time setup](#one-time-setup) to clone the repo, get testing OS qcow2 image, and (optional but recommended) setting up environment variables.
 
 The following list of commands use defaults (e.g., instance 1, `nproc`+2 jobs, and assuming `arch.{img,uuid}` have the testing OS qcow2 image/rootfs-UUID) to demonstrate the end-to-end process.
 
