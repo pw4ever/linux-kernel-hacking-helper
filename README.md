@@ -2,25 +2,78 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
-- [Linux kernel building/testing helper scripts](#linux-kernel-buildingtesting-helper-scripts)
-  - [Cheatsheet](#cheatsheet)
-    - [One-time setup](#one-time-setup)
-    - [Build, install, and test the kernel](#build-install-and-test-the-kernel)
-      - [QEMU GDBServer-based kernel test and debug (recommended)](#qemu-gdbserver-based-kernel-test-and-debug-recommended)
-      - [Virtual-serial-port-based kernel test and debug (not recommended)](#virtual-serial-port-based-kernel-test-and-debug-not-recommended)
-    - [Build, install, and test a kernel module](#build-install-and-test-a-kernel-module)
+- [Summary](#summary)
+  - [In scope](#in-scope)
+  - [Out of scope](#out-of-scope)
+- [Cheatsheet](#cheatsheet)
+- [One-time setup](#one-time-setup)
+- [Build and test multiple instances of kernel](#build-and-test-multiple-instances-of-kernel)
+  - [QEMU GDBServer-based kernel test and debug (recommended)](#qemu-gdbserver-based-kernel-test-and-debug-recommended)
+  - [Virtual-serial-port-based kernel test and debug (not recommended)](#virtual-serial-port-based-kernel-test-and-debug-not-recommended)
+- [Build, install, and test a loadable kernel module](#build-install-and-test-a-loadable-kernel-module)
 - [Tips](#tips)
   - [List state of and optionally act on each kernel build instance](#list-state-of-and-optionally-act-on-each-kernel-build-instance)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# Linux kernel building/testing helper scripts
+# Summary
 
-These scripts help set up multiple Linux kernel building instances and facilitate their test using QEMU/KVM on Linux.
+## In scope
 
-## Cheatsheet
+- Manage building, installing, and testing-with-QEMU multiple instances of Linux kernel and loadable kernel modules (LKMs).
+- [Easy defaults](#cheatsheet) while exposing the full capability of the underlying Makefile-based kernel build infrastructure.
+- Implement with ubiquitous programs (e.g., `bash`) to reduce the friction of using this tool.
 
-### One-time setup
+
+## Out of scope
+
+- Set up kernel/module build dependencies on your distro.
+- [Comprehensively document](https://github.com/cirosantilli/linux-kernel-module-cheat) on building/testing kernel/LKHs on various architectures/environments.
+
+
+# Cheatsheet
+
+Follow [one-time setup](#one-time-setup) to clone the repo, get testing OS qcow2 image, and (optional but recommended) setting up environment variable.
+
+The following list of commands use defaults (e.g., instance 1, `nproc`+2 jobs, and assuming `arch.{img,uuid}` have the testing OS qcow2 image/rootfs-UUID) to demonstrate the end-to-end process.
+
+Build and install kernel instance 1 into `$LKHH_IMAGE/arch.img`.
+```bash
+# pushd $HOME/project/linux # `linux` is the root of the kernel repo "https://github.com/torvalds/linux"
+lkhh-kernel-make -t mrproper
+lkhh-kernel-make -t defconfig
+lkhh-kernel-merge-config -- $LKHH_BIN/config/debug
+lkhh-kernel-make -t all
+lkhh-mount
+lkhh-kernel-install
+lkhh-umount
+```
+
+Testing the built kernel image with QEMU.
+```bash
+lkhh-kernel-test-with-qemu -- -m 1024m
+# lkhh-kernel-test-with-qemu -- -m 512m -enable-kvm # KVM really helps with performance
+# lkhh-kernel-test-with-qemu -- -m 512m -enable-kvm -net nic -net user # if you want networking
+```
+
+While the QEMU instance is running, debug the kernel with GDB.
+```bash
+lkhh-kernel-debug
+```
+
+Build and install LKM.
+```bash
+# pushd $HOME/project/my_lkm # `my_lkm` is the root of the LKM, with the minimal module Makefile (e.g., "obj-m := my_lkm.o")
+# lkhh-mount # if the testing OS image has not been mounted yet
+lkhh-module-make -I
+# lkhh-umount # if the testing OS image is mounted
+```
+
+# One-time setup
+
+First things first. Ensure you have [tools for building kernel](https://github.com/torvalds/linux/blob/master/Documentation/process/changes.rst#current-minimal-requirements); consult your distro documentation for instruction. For example, Arch Linux makes this [really easy](https://wiki.archlinux.org/index.php/Kernel/Traditional_compilation#Install_the_core_packages) with the `base-devel` package group. By design, LKHH does NOT help you with this because of the moving target and numerous various environments that user may want to use this.
+
+Install `qemu` if you want to testing the built kernel/LKMs.
 
 ```bash
 export LKHH_DIR="$HOME/hacking/linux-kernel"
@@ -36,30 +89,29 @@ popd
 
 # see help: lkhh-init -h
 lkhh-init -i 10
-# (optional) in addition to initialize 10 build instances, also download and decompress a testing OS image `arch-clean.{img,uuid}` into `$LKHH_IMAGE`
+# # (optional) in addition to initialize 10 build instances, also download and decompress a testing OS image `arch-clean.{img,uuid}` into `$LKHH_IMAGE` (recommend to use `aria2` for fast parallel download; fall back to `wget` otherwise).
 # lkhh-init -i 10 -d
-# recommendation is to rename `arch-clean.{img,uuid}` into `arch.{img,uuid}` for testing below
+# # recommendation is to rename `arch-clean.{img,uuid}` into `arch.{img,uuid}` for testing below
 
 sudo modprobe nbd nbds_max=32 max_part=64
 ```
 
+# Build and test multiple instances of kernel
 
-### Build, install, and test the kernel
-
-Put a QEMU Linux OS image (e.g., a minimal [Arch Linux](https://www.archlinux.org/) installation) and its root fs UUID is under `$LKHH_IMAGE` (see [One-time setup](#one-time-setup) for the default path setup).
+Put a QEMU Linux OS image (e.g., a minimal [Arch Linux](https://www.archlinux.org/) installation) and its root filesystem UUID under `$LKHH_IMAGE` (see [One-time setup](#one-time-setup) for the default path setup).
 
 Suppose they are `$LKHH_IMAGE/arch.img` and `$LKHH_IMAGE/arch.uuid` from now on, and the `root` flesystem (`/`; with `/usr` on the same partition with `/`) is `/dev/sda2` in `arch.img` ([Follow this page to download such an Arch Linux qcow2 image](https://github.com/pw4ever/linux-kernel-hacking-helper/releases/tag/arch-clean); `sudo`-able username/password: user/user).
 
 ```bash
-# pushd $HOME/project/linux # cd into the kernel source root (https://github.com/torvalds/linux)
+# pushd $HOME/project/linux # `linux` is the root of the kernel repo "https://github.com/torvalds/linux"
 # see LKHH tool help, e.g., `lkhh-kernel-make -h`
 # see kernel make help: `lkhh-kernel-make` or `lkhh-kernel-make -t help`
 
 lkhh-kernel-make -i 1 -t clean  # remove generated files
 # lkhh-kernel-make -i 1 -t mrproper  # remove generated file + config + backup files
 lkhh-kernel-make -i 1 -t defconfig  # config kernel with defconfig
-lkhh-kernel-merge-config -i 1 $HOME/hacking/linux-kernel/helper/config/kgdb  # merge kgdb support in config
-# lkhh-kernel-merge-config -i 1 $HOME/hacking/linux-kernel/helper/config/debug  # at least use the "debug" config to allow symbolic debugging of the kernel using GDB (see below)
+lkhh-kernel-merge-config -i 1 $LKHH_BIN/config/kgdb  # merge kgdb support in config
+# lkhh-kernel-merge-config -i 1 $LKHH_BIN/config/debug  # at least use the "debug" config to allow symbolic debugging of the kernel using GDB (see below)
 lkhh-kernel-make -i 1 -j 8 -t all  # build kernel instance 1 with 8 parallel jobs
 
 lkhh-mount -n 3 -i arch -p 2  # mount device '/dev/sda2' (the root partition) of '$LKHH_IMAGE/arch.img' with '/dev/ndb3' onto '$LKHH_IMAGE/mnt/3'
@@ -69,7 +121,7 @@ lkhh-umount -n 3  # umount '$LKHH_IMAGE/mnt/3' and diassociate '/dev/nbd3'
 
 # read kdb doc at https://www.kernel.org/doc/htmldocs/kgdb/index.html
 ```
-#### QEMU GDBServer-based kernel test and debug (recommended)
+## QEMU GDBServer-based kernel test and debug (recommended)
 
 Get help.
 
@@ -105,7 +157,7 @@ By default, `lkhh-kernel-test-with-qemu` and `lkhh-kernel-debug` will use TCP po
 
 Once in the GDB session, use 'c' to release the target and `Ctrl-c` to break-in again. Refer to [kernel documentation](https://github.com/torvalds/linux/blob/master/Documentation/dev-tools/gdb-kernel-debugging.rst) for further information.
 
-#### Virtual-serial-port-based kernel test and debug (not recommended)
+## Virtual-serial-port-based kernel test and debug (not recommended)
 
 Suppose `lkhh-kernel-merge-config $LKHH_BIN/config/kgdb` has been used to merge `kgdb` and `kdb` support prior to kernel building using `lkhh-ernel-make -t all`.
 
@@ -127,12 +179,12 @@ target remote /dev/pts/<nn>
 
 In the guest, [break in](http://landley.net/kdocs/Documentation/DocBook/xhtml-nochunks/kgdb.html#usingKDB) to kgdb/kdb with `echo g > /proc/sysrq-trigger` as `root`. We can also [switch](http://landley.net/kdocs/Documentation/DocBook/xhtml-nochunks/kgdb.html#idp1634992) between kgdb and kdb.
 
-### Build, install, and test a kernel module
+# Build, install, and test a loadable kernel module
 
 ```bash
-# lkhh-mount # if needed; see usage above
+# lkhh-mount # if the testing OS image has not been mounted yet
 lkhh-module-make -i 1 -I # build module with kernel instance 1 ("-i 1") and install the module ("-I")
-# lkhh-umount # if needed; see usage above
+# lkhh-umount # if the testing OS image is mounted
 ```
 
 # Tips
