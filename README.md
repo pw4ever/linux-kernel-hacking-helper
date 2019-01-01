@@ -46,19 +46,20 @@ sudo modprobe nbd nbds_max=32 max_part=64
 
 ### Build, install, and test the kernel
 
-Put a QEMU Linux OS image (e.g., a minimal [Arch Linux](https://www.archlinux.org/) installation) and its root fs UUID is under $HOME/image.
+Put a QEMU Linux OS image (e.g., a minimal [Arch Linux](https://www.archlinux.org/) installation) and its root fs UUID is under `$LKHH_IMAGE` (see "one-time setup above" on the path).
 
-Suppose they are `$HOME/image/arch.img` and `$HOME/image/arch.uuid` from now on, and the `root` flesystem (`/`; with `/usr` on the same partition with `/`) is `/dev/sda2` in `arch.img` ([Follow this page to download such an Arch Linux qcow2 image](https://github.com/pw4ever/linux-kernel-hacking-helper/releases/tag/arch-clean); `sudo`-able username/password: user/user).
+Suppose they are `$LKHH_IMAGE/arch.img` and `$LKHH_IMAGE/arch.uuid` from now on, and the `root` flesystem (`/`; with `/usr` on the same partition with `/`) is `/dev/sda2` in `arch.img` ([Follow this page to download such an Arch Linux qcow2 image](https://github.com/pw4ever/linux-kernel-hacking-helper/releases/tag/arch-clean); `sudo`-able username/password: user/user).
 
 ```bash
 # pushd $HOME/project/linux # cd into the kernel source root (https://github.com/torvalds/linux)
-# see tool help: lkhh-kernel-make -h
-# see kernel make help: lkhh-kernel-make
+# see LKHH tool help, e.g., `lkhh-kernel-make -h`
+# see kernel make help: `lkhh-kernel-make` or `lkhh-kernel-make -t help`
 
 lkhh-kernel-make -i 1 -t clean  # remove generated files
 # lkhh-kernel-make -i 1 -t mrproper  # remove generated file + config + backup files
 lkhh-kernel-make -i 1 -t defconfig  # config kernel with defconfig
 lkhh-kernel-merge-config -i 1 $HOME/hacking/linux-kernel/helper/config/kgdb  # merge kgdb support in config
+# lkhh-kernel-merge-config -i 1 $HOME/hacking/linux-kernel/helper/config/debug  # at least use the "debug" config to allow symbolic debugging of the kernel using GDB (see below)
 lkhh-kernel-make -i 1 -j 8 -t all  # build kernel instance 1 with 8 parallel jobs
 
 lkhh-mount -n 3 -i arch -p 2  # mount device '/dev/sda2' (the root partition) of '$LKHH_IMAGE/arch.img' with '/dev/ndb3' onto '$LKHH_IMAGE/mnt/3'
