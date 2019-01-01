@@ -46,7 +46,7 @@ sudo modprobe nbd nbds_max=32 max_part=64
 
 ### Build, install, and test the kernel
 
-Put a QEMU Linux OS image (e.g., a minimal [Arch Linux](https://www.archlinux.org/) installation) and its root fs UUID is under `$LKHH_IMAGE` (see "one-time setup above" on the path).
+Put a QEMU Linux OS image (e.g., a minimal [Arch Linux](https://www.archlinux.org/) installation) and its root fs UUID is under `$LKHH_IMAGE` (see [One-time setup](#one-time-setup) for the default path setup).
 
 Suppose they are `$LKHH_IMAGE/arch.img` and `$LKHH_IMAGE/arch.uuid` from now on, and the `root` flesystem (`/`; with `/usr` on the same partition with `/`) is `/dev/sda2` in `arch.img` ([Follow this page to download such an Arch Linux qcow2 image](https://github.com/pw4ever/linux-kernel-hacking-helper/releases/tag/arch-clean); `sudo`-able username/password: user/user).
 
