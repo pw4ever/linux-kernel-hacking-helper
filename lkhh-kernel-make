@@ -82,11 +82,11 @@ ERROR: $build_dir does not exist; consider "lkhh-init -i $_instance" first.
 END
 
 vecho 0 <<END
-make "O=$build_dir" -j $_jobs "$@" "$_target"
+make -C "$LKHH_LINUX" "O=$build_dir" -j $_jobs "$@" "$_target"
 END
 
 if (( deterministic > 0 )); then
     export KBUILD_BUILD_TIMESTAMP="1991-08-25" # Happy Birthday, Linux
 fi
 
-make "O=$build_dir" -j $_jobs "$@" "$_target"
+make -C "$LKHH_LINUX" "O=$build_dir" -j $_jobs "$@" "$_target"

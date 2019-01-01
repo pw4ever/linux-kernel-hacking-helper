@@ -134,7 +134,7 @@ END
 function dumpparam () {
     cat -
     echo
-    for name in LKHH_DIR LKHH_BIN LKHH_ARENA LKHH_IMAGE; do
+    for name in LKHH_DIR LKHH_BIN LKHH_ARENA LKHH_IMAGE LKHH_LINUX; do
         echo "export $name=$(echo $(eval "echo \${$name}"))"
     done
 }

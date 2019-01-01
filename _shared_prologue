@@ -12,8 +12,39 @@ export LKHH_BIN=${LKHH_BIN:-$_rootdir}
 export LKHH_ARENA=${LKHH_ARENA:-"$LKHH_DIR/arena"}
 export LKHH_IMAGE=${LKHH_IMAGE:-"$LKHH_DIR/image"}
 
+#
+# Heuristics for identifying the kernel source rootdir to build.
+#
+function _lkhh_test_pwd_for_kernel_rootdir {
+    [[ -f Kbuild ]] && [[ -f Kconfig ]] && [[ -f Makefile ]]
+}
+
+if _lkhh_test_pwd_for_kernel_rootdir; then
+    export LKHH_LINUX=${LKHH_LINUX:-"$(readlink -f "$PWD")"}
+else
+    export LKHH_LINUX=${LKHH_LINUX:-"$HOME/project/linux"}
+fi
+
+#
+# Check validity of $LKHH_LINUX as a kernel source rootdir.
+#
+
+if ! pushd "$LKHH_LINUX" &>/dev/null; then
+    >/dev/stderr echo "Can not change into \"$LKHH_LINUX\"."
+    exit 1
+elif ! _lkhh_test_pwd_for_kernel_rootdir; then
+    >/dev/stderr echo "$LKHH_LINUX is not a Linux kernel source rootdir."
+    popd &>/dev/null
+    exit 1
+fi
+popd &>/dev/null
+
+unset -f _lkhh_test_pwd_for_kernel_rootdir
+
+#
 # https://bugzilla.redhat.com/show_bug.cgi?id=1528020
 # Kernel building does not like a custom CPATH.
+#
 unset CPATH
 
 _progname=${_progname:-"$(basename $0)"}
