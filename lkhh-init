@@ -9,8 +9,8 @@ source "${_rootdir}/_shared_prologue"
 #
 # parameters
 #
-declare -i _instance=${_instance:-1}
-declare -i _download=${_download:-0}
+declare -i instance=${instance:-1}
+declare -i download=${download:-0}
 
 #
 # getopt processing
@@ -20,11 +20,11 @@ function my_getopt_cont () {
     case "$1" in
         -i|--instance)
             shift
-            _instance=$1
+            instance=$1
             n_shift=2
             ;;
         -d|--download)
-            _download=1
+            download=1
             n_shift=1
             ;;
     esac
@@ -37,8 +37,8 @@ cat <<END
 END
 )" "$(
 cat <<END
--i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
--d	--download		Download an OS image for testing (default: $_download).
+-i	--instance		Maximal number of kernel instances to prepare (default: $instance).
+-d	--download		Download an OS image for testing (default: $download).
 END
 )" "$@"
 ret=$?
@@ -63,7 +63,7 @@ Fail to create $LKHH_ARENA.
 END
 
 
-eval mkdir -p $LKHH_ARENA/{target,build}/{1..$_instance} "$LKHH_ARENA/aux" "$LKHH_IMAGE/mnt" || >/dev/stderr vecho 0 <<END
+eval mkdir -p $LKHH_ARENA/{target,build}/{1..$instance} "$LKHH_ARENA/aux" "$LKHH_IMAGE/mnt" || >/dev/stderr vecho 0 <<END
 ERROR: Fail to create certain base directories.
 END
 
@@ -74,7 +74,7 @@ cp -f "$file" "$dir" || >/dev/stderr vecho 0 <<END
 ERROR: Fail to copy $file into $dir.
 END
 
-if (( _download > 0 )); then
+if (( download > 0 )); then
     pushd $LKHH_IMAGE || die 1 <<END
 Fail to cd into $LKHH_IMAGE.
 END
