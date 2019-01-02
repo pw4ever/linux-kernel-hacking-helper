@@ -9,8 +9,8 @@ source "${_rootdir}/_shared_prologue"
 #
 # parameters
 #
-declare -i _all=${_all:-0}
-declare _foreach=${_foreach:-}
+declare -i all=${all:-0}
+declare foreach=${foreach:-}
 
 #
 # getopt processing
@@ -19,12 +19,12 @@ function my_getopt_cont () {
     local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
     case "$1" in
         -a|--all)
-            _all=1
+            all=1
             n_shift=1
             ;;
         -f|--foreach)
             shift
-            _foreach=$1
+            foreach=$1
             n_shift=2
             ;;
     esac
@@ -37,8 +37,8 @@ cat <<END
 END
 )" "$(
 cat <<END
--a	--all		List all initialized instances, not only non-empty ones (default: $_all).
--f	--foreach		A snippet of shell script to be eval'd, which takes each build path from stdin (default: $_foreach).
+-a	--all		List all initialized instances, not only non-empty ones (default: $all).
+-f	--foreach		A snippet of shell script to be eval'd, which takes each build path from stdin (default: $foreach).
 END
 )" "$@"
 ret=$?
@@ -86,11 +86,11 @@ ls -d "$build_root"/* | sort -V | while IFS= read -r line; do
     fi
     output+="\n"
 
-    if (( output_p > 0 )) || (( _all > 0 )); then
+    if (( output_p > 0 )) || (( all > 0 )); then
         printf "$output"
     fi
 
-    if [[ -n "$_foreach" ]]; then
-        eval "echo '$line' | $_foreach"
+    if [[ -n "$foreach" ]]; then
+        eval "echo '$line' | $foreach"
     fi
 done
