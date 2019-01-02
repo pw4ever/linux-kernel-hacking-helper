@@ -9,16 +9,16 @@ source "${_rootdir}/_shared_prologue"
 #
 # parameters
 #
-declare -i _instance=${_instance:-1}
-declare _image=${_image:-arch}
+declare -i instance=${instance:-1}
+declare image=${image:-arch}
 
 # "nokaslr" is critical for resolving symbols in debug
 # see https://github.com/torvalds/linux/blob/master/Documentation/dev-tools/gdb-kernel-debugging.rst#setup
 # alternative: CONFIG_RANDOMIZE_BASE=n
-declare _cmdline=${_cmdline:-"nokaslr"}
+declare cmdline=${cmdline:-"nokaslr"}
 
-declare _system=${_system:-"x86_64"}
-declare _gdb=${_gdb:-"tcp::1234"}
+declare system=${system:-"x86_64"}
+declare gdb=${gdb:-"tcp::1234"}
 
 #
 # getopt processing
@@ -28,27 +28,27 @@ function my_getopt_cont () {
     case "$1" in
         -i|--instance)
             shift
-            _instance=$1
+            instance=$1
             n_shift=2
             ;;
         -I|--image)
             shift
-            _image=$1
+            image=$1
             n_shift=2
             ;;
         -c|--cmdline)
             shift
-            _cmdline=$1
+            cmdline=$1
             n_shift=2
             ;;
         -s|--system)
             shift
-            _system=$1
+            system=$1
             n_shift=2
             ;;
         -g|--gdb)
             shift
-            _gdb=$1
+            gdb=$1
             n_shift=2
             ;;
     esac
@@ -62,11 +62,11 @@ cat <<END
 END
 )" "$(
 cat <<END
--i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
--I	--image		Image (.img) under $LKHH_IMAGE that hosts the OS (default: $_image).
--c	--cmdline		Kernel cmdline (default: $_cmdline).
--s	--system		QEMU system used for testing (default: $_system).
--g	--gdb		QEMU GDB server device (refer to QEMU manpage; default: $_gdb).
+-i	--instance		Maximal number of kernel instances to prepare (default: $instance).
+-I	--image		Image (.img) under $LKHHIMAGE that hosts the OS (default: $image).
+-c	--cmdline		Kernel cmdline (default: $cmdline).
+-s	--system		QEMU system used for testing (default: $system).
+-g	--gdb		QEMU GDB server device (refer to QEMU manpage; default: $gdb).
 END
 )" "$@"
 ret=$?
@@ -86,15 +86,15 @@ END1
 )
 END
 
-target_dir="$LKHH_ARENA/target/$_instance"
+target_dir="$LKHH_ARENA/target/$instance"
 [[ -d "$target_dir" ]] || die 1 <<END
-ERROR: $target_dir does not exist; consider "lkhh-init -i $_instance" first.
+ERROR: $target_dir does not exist; consider "lkhh-init -i $instance" first.
 END
 
 vmlinuz_path="$target_dir/vmlinuz"
 initrd_path="$target_dir/initramfs-linux"
-image_path="$LKHH_IMAGE/$_image.img"
-uuid_path="$LKHH_IMAGE/$_image.uuid"
+image_path="$LKHHIMAGE/$image.img"
+uuid_path="$LKHHIMAGE/$image.uuid"
 
 for i in "$vmlinuz_path" "$initrd_path" "$image_path" "$uuid_path"; do
     [[ -f "$i" ]] || die 1 <<END
@@ -102,16 +102,16 @@ ERROR: $i is not an existing regular file.
 END
 done
 
-qemu_system="qemu-system-${_system}"
-for exe in "$qemu_system"; do
+qemusystem="qemu-system-${system}"
+for exe in "$qemusystem"; do
     type -p $exe >/dev/null || die 1 <<END
 ERROR: $exe is not on PATH.
 END
 done
 
 vecho 0 <<END
-eval "'$qemu_system'" -kernel "'$vmlinuz_path'" -initrd "'$initrd_path'" -hda "'$image_path'" "${_gdb:+-gdb '$_gdb'}" -append "'root=$(cat "$uuid_path") $_cmdline'" "$*"
+eval "'$qemusystem'" -kernel "'$vmlinuz_path'" -initrd "'$initrd_path'" -hda "'$image_path'" "${gdb:+-gdb '$gdb'}" -append "'root=$(cat "$uuid_path") $cmdline'" "$*"
 END
 
 unset IFS
-eval "'$qemu_system'" -kernel "'$vmlinuz_path'" -initrd "'$initrd_path'" -hda "'$image_path'" "${_gdb:+-gdb '$_gdb'}" -append "'root=$(cat "$uuid_path") $_cmdline'" "$*"
+eval "'$qemusystem'" -kernel "'$vmlinuz_path'" -initrd "'$initrd_path'" -hda "'$image_path'" "${gdb:+-gdb '$gdb'}" -append "'root=$(cat "$uuid_path") $cmdline'" "$*"
