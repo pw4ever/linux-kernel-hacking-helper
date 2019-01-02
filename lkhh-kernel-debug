@@ -32,7 +32,7 @@ function my_getopt_cont () {
     return $n_shift
 }
 
-my_getopt "i:g:" "instance:,gdbremote:" "my_getopt_cont" "Test kernel instance using OS image with QEMU." "$(
+my_getopt "i:g:" "instance:,gdbremote:" "my_getopt_cont" "Debug a running kernel instance with GDB." "$(
 cat <<END
 [-i|--instance=<instance>] [-g|--gdbremote=<gdbremote>]
 END
