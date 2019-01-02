@@ -61,7 +61,15 @@ While the QEMU instance is running, debug the kernel with GDB.
 lkhh-kernel-debug
 ```
 
-Build and install LKM.
+Create a new barebone LKM project `hello` (from the default template `lkm_barebone`; see `lkhh-new -h` for help), build, and install it.
+```bash
+# lkhh-mount # if the testing OS image has not been mounted yet
+proj=hello; lkhh-new -p "$proj" -f -- "cd \"$proj\"; lkhh-module-make -I"
+# lkhh-umount # if the testing OS image is mounted
+```
+Afterwards, use `sudo modprobe hello` and `sudo modprobe -r hello` inside the QEMU session (see above) to load/unload the `hello` module.
+
+Build and install an existing LKM.
 ```bash
 # pushd $HOME/project/my_lkm # `my_lkm` is the root of the LKM, with the minimal module Makefile (e.g., "obj-m := my_lkm.o")
 # lkhh-mount # if the testing OS image has not been mounted yet
