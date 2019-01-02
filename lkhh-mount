@@ -11,7 +11,7 @@ source "${_rootdir}/_shared_prologue"
 #
 declare -i nbd=${nbd:-1}
 declare image=${image:-arch}
-declare part=${_device:-2}
+declare part=${part:-2}
 
 #
 # getopt processing
@@ -45,7 +45,7 @@ END
 )" "$(
 cat <<END
 -n	--nbd		Network Block Device (NBD) for loop-mount the image (default: $nbd).
--i	--image		Image (.img) under $LKHHIMAGE that hosts the OS (default: $image).
+-i	--image		Image (.img) under $LKHH_IMAGE that hosts the OS (default: $image).
 -p	--part		Root partition number inside the image (default: $part).
 END
 )" "$@"
@@ -66,7 +66,7 @@ END1
 )
 END
 
-image_path="$LKHHIMAGE/$image.img"
+image_path="$LKHH_IMAGE/$image.img"
 [[ -f "$image_path" ]] || die 1 <<END
 ERROR: $image_path is not an existing regular file.
 END
@@ -76,7 +76,7 @@ nbd_device="/dev/nbd${nbd}"
 ERROR: $nbd_device is not a block special device.
 END
 
-mnt="$LKHHIMAGE/mnt/$nbd"
+mnt="$LKHH_IMAGE/mnt/$nbd"
 mkdir -p "$mnt" 
 [[ -d "$mnt" ]] || die 1 <<END
 ERROR: $mnt is not an existing directory.
