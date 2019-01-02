@@ -63,7 +63,7 @@ END
 )" "$(
 cat <<END
 -i	--instance		Maximal number of kernel instances to prepare (default: $instance).
--I	--image		Image (.img) under $LKHHIMAGE that hosts the OS (default: $image).
+-I	--image		Image (.img) under $LKHH_IMAGE that hosts the OS (default: $image).
 -c	--cmdline		Kernel cmdline (default: $cmdline).
 -s	--system		QEMU system used for testing (default: $system).
 -g	--gdb		QEMU GDB server device (refer to QEMU manpage; default: $gdb).
@@ -93,8 +93,8 @@ END
 
 vmlinuz_path="$target_dir/vmlinuz"
 initrd_path="$target_dir/initramfs-linux"
-image_path="$LKHHIMAGE/$image.img"
-uuid_path="$LKHHIMAGE/$image.uuid"
+image_path="$LKHH_IMAGE/$image.img"
+uuid_path="$LKHH_IMAGE/$image.uuid"
 
 for i in "$vmlinuz_path" "$initrd_path" "$image_path" "$uuid_path"; do
     [[ -f "$i" ]] || die 1 <<END
