@@ -45,7 +45,7 @@ $(
 dumpparam <<END1
 $(
 for name in instance; do
-    echo "$name=$(echo $(eval "echo \$_$name"))"
+    echo "$name=$(echo $(eval "echo \$$name"))"
 done
 )
 END1
