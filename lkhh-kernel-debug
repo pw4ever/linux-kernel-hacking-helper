@@ -9,8 +9,8 @@ source "${_rootdir}/_shared_prologue"
 #
 # parameters
 #
-declare -i _instance=${_instance:-1}
-declare _gdbremote=${_gdbtarget:-":1234"}
+declare -i instance=${instance:-1}
+declare gdbremote=${_gdbtarget:-":1234"}
 
 #
 # getopt processing
@@ -20,12 +20,12 @@ function my_getopt_cont () {
     case "$1" in
         -i|--instance)
             shift
-            _instance=$1
+            instance=$1
             n_shift=2
             ;;
         -g|--gdbremote)
             shift
-            _gdbremote=$1
+            gdbremote=$1
             n_shift=2
             ;;
     esac
@@ -38,8 +38,8 @@ cat <<END
 END
 )" "$(
 cat <<END
--i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
--g	--gdbremote		Parameter to GDB's "target remote" command (default: $_gdbremote).
+-i	--instance		Maximal number of kernel instances to prepare (default: $instance).
+-g	--gdbremote		Parameter to GDB's "target remote" command (default: $gdbremote).
 END
 )" "$@"
 ret=$?
@@ -59,9 +59,9 @@ END1
 )
 END
 
-build_dir="$LKHH_ARENA/build/$_instance"
+build_dir="$LKHH_ARENA/build/$instance"
 [[ -d "$build_dir" ]] || die 1 <<END
-ERROR: $build_dir does not exist; consider "lkhh-init -i $_instance" first.
+ERROR: $build_dir does not exist; consider "lkhh-init -i $instance" first.
 END
 
 vmlinux_path="$build_dir/vmlinux"
@@ -73,9 +73,9 @@ END
 done
 
 vecho 0 <<END
-gdb -ex "target remote $_gdbremote" "$vmlinux_path" $*
+gdb -ex "target remote $gdbremote" "$vmlinux_path" $*
 END
 
 pushd "$build_dir"
-gdb -ex "target remote $_gdbremote" "$vmlinux_path" $*
+gdb -ex "target remote $gdbremote" "$vmlinux_path" $*
 popd
