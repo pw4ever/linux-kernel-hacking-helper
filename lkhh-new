@@ -24,7 +24,7 @@ declare -i force=${force:-0}
 # getopt processing
 #
 function my_getopt_cont () {
-    n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
     case "$1" in
         -t|--template)
             shift
