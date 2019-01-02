@@ -1,0 +1,130 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+_ver="0.0.1-dev"
+#_author="Wei Peng <me@1pengw.com>"
+
+source "${_rootdir}/_shared_prologue"
+
+#
+# parameters
+#
+declare template=${template:-lkm_barebone}
+declare project=${project:-mylkm}
+declare author=${author:-$( (
+    # start subshell to contain env pollution
+    name=$(git config user.name);
+    : ${name:=$(whoami)};
+    echo $name;
+    ) )}
+declare license=${license:-GPL}
+declare -i force=${force:-0}
+
+#
+# getopt processing
+#
+function my_getopt_cont () {
+    n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    case "$1" in
+        -t|--template)
+            shift
+            template=$1
+            n_shift=2
+            ;;
+        -p|--project)
+            shift
+            project=$1
+            n_shift=2
+            ;;
+        -a|--author)
+            shift
+            author=$1
+            n_shift=2
+            ;;
+        -l|--license)
+            shift
+            license=$1
+            n_shift=2
+            ;;
+        -f|--force)
+            force=1
+            n_shift=1
+            ;;
+    esac
+    return $n_shift
+}
+
+my_getopt "t:p:a:l:f" "template:,project:,author:,license:,force" "my_getopt_cont" "Create a new project from template." "$(
+cat <<END
+[-t|--template=<template>] [-p|--project=<project>]
+    [-a|--author=<author>] [-l|--license=<license>]
+    [-f|--force]
+END
+)" "$(
+cat <<END
+-t	--template		Template from which project is created (default: $template).
+-p	--project		Project name; any sequence of non-C-symbol chars is replaced with underscore/_ (default: $project).
+-a	--author		Author (default: $author).
+-l	--license		License (default: $license).
+-f	--force		Forcibly create new project even it already exists (default: $force).
+END
+)" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret
+
+#
+# normalization
+#
+
+# normalize project name for use in C source code
+project=$(echo "$project" | sed 's/[^[:alnum:]_]\+/_/g; s/^[[:digit:]]\+/_/g;')
+
+
+#
+# sanity check
+#
+
+vecho 0 <<END
+$(
+dumpparam <<END1
+$(
+for name in template project author license force; do
+    echo "$name=$(echo $(eval "echo \$_$name"))"
+done
+)
+END1
+)
+END
+
+template_dir="$_rootdir/templates/$template"
+[[ -d "$template_dir" ]] || die 1 <<END
+No such template: $template.
+END
+
+[[ -d "$project" ]] && (( force == 0 )) && die 1 <<END
+$project already exists; force (-f) or try a new project.
+END
+
+mkdir -p "$project"
+pushd "$project" &>/dev/null
+cp -r "$template_dir/"* . || die 1 <<END
+Fail to create $project from $template.
+END
+popd &>/dev/null
+
+[[ -d "$project" ]] || die 1 <<END
+Project $project is not created.
+END
+
+#
+# Substitute
+#
+
+find $project -type f -name '*.template' | while IFS= read f; do 
+    sed -i -e "s/<PROJECT>/$project/g; s/<AUTHOR>/$author/g; s/<LICENSE>/$license/g;" "$f"
+    rename '.template' '' "$f"
+done
+
+# evaluate rest of arguments after creating 
+eval "$@"

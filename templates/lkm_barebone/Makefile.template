@@ -1,0 +1,26 @@
+ifeq ($(DEBUG),y)
+	DBGFLAGS = -O -g -DDEBUG
+else
+	DBGFLAGS = -O2
+endif
+
+ifneq ($(KERNELRELEASE),)
+
+ccflags-y += $(DBGFLAGS)
+ccflags-y += -I$(src)/include
+
+obj-m := <PROJECT>.o
+<PROJECT>-y := main.o
+
+else
+
+.PHONY: all modules
+
+KDIR ?= /lib/modules/`uname -r`/build
+
+all: modules
+
+modules:
+	$(MAKE) -C$(KDIR) M=$$PWD $$TARGET
+
+endif

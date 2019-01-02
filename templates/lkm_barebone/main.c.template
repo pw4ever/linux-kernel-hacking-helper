@@ -1,0 +1,28 @@
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+
+int <PROJECT>_param = 0;
+
+module_param(<PROJECT>_param, int, S_IRUGO);
+
+static int <PROJECT>_init(void)
+{
+    pr_info("Hello, world.\n");
+    return 0;
+}
+
+static void <PROJECT>_exit(void)
+{
+    pr_info("Goodbye, world.\n");
+}
+
+MODULE_AUTHOR("<AUTHOR>");
+MODULE_LICENSE("<LICENSE>");
+module_init(<PROJECT>_init);
+module_exit(<PROJECT>_exit);
