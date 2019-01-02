@@ -9,12 +9,12 @@ source "${_rootdir}/_shared_prologue"
 #
 # parameters
 #
-declare -i _instance=${_instance:-1}
-declare _target=${_target:-help}
-declare -i _jobs=${_jobs:-$((2+$(nproc)))}
+declare -i instance=${instance:-1}
+declare target=${target:-help}
+declare -i jobs=${jobs:-$((2+$(nproc)))}
 
 # see also: http://nickdesaulniers.github.io/blog/2018/06/02/speeding-up-linux-kernel-builds-with-ccache/
-declare -i _deterministic=${_deterministic:-0}
+declare -i deterministic=${deterministic:-0}
 
 #
 # getopt processing
@@ -24,21 +24,21 @@ function my_getopt_cont () {
     case "$1" in
         -i|--instance)
             shift
-            _instance=$1
+            instance=$1
             n_shift=2
             ;;
         -t|--target)
             shift
-            _target=$1
+            target=$1
             n_shift=2
             ;;
         -j|--jobs)
             shift
-            _jobs=$1
+            jobs=$1
             n_shift=2
             ;;
         -d|--deterministic)
-            _deterministic=1
+            deterministic=1
             n_shift=1
             ;;
     esac
@@ -52,10 +52,10 @@ cat <<END
 END
 )" "$(
 cat <<END
--i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
--t	--target		Makefile target to make (default: $_target).
--j	--jobs		Number of parallel make jobs (default: $_jobs).
--d	--deterministic		Deterministic build to leverage, e.g., ccache (default: $_deterministic).
+-i	--instance		Maximal number of kernel instances to prepare (default: $instance).
+-t	--target		Makefile target to make (default: $target).
+-j	--jobs		Number of parallel make jobs (default: $jobs).
+-d	--deterministic		Deterministic build to leverage, e.g., ccache (default: $deterministic).
 END
 )" "$@"
 ret=$?
@@ -75,18 +75,18 @@ END1
 )
 END
 
-build_dir="$LKHH_ARENA/build/$_instance"
+build_dir="$LKHH_ARENA/build/$instance"
 
 [[ -d "$build_dir" ]] || die 1 <<END
-ERROR: $build_dir does not exist; consider "lkhh-init -i $_instance" first.
+ERROR: $build_dir does not exist; consider "lkhh-init -i $instance" first.
 END
 
 vecho 0 <<END
-make -C "$LKHH_LINUX" "O=$build_dir" -j $_jobs "$@" "$_target"
+make -C "$LKHH_LINUX" "O=$build_dir" -j $jobs "$@" "$target"
 END
 
 if (( deterministic > 0 )); then
     export KBUILD_BUILD_TIMESTAMP="1991-08-25" # Happy Birthday, Linux
 fi
 
-make -C "$LKHH_LINUX" "O=$build_dir" -j $_jobs "$@" "$_target"
+make -C "$LKHH_LINUX" "O=$build_dir" -j $jobs "$@" "$target"
