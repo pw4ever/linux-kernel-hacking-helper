@@ -9,9 +9,9 @@ source "${_rootdir}/_shared_prologue"
 #
 # parameters
 #
-declare -i _nbd=${_nbd:-1}
-declare _image=${_image:-arch}
-declare _part=${_device:-2}
+declare -i nbd=${nbd:-1}
+declare image=${image:-arch}
+declare part=${_device:-2}
 
 #
 # getopt processing
@@ -21,17 +21,17 @@ function my_getopt_cont () {
     case "$1" in
         -n|--nbd)
             shift
-            _nbd=$1
+            nbd=$1
             n_shift=2
             ;;
         -i|--image)
             shift
-            _image=$1
+            image=$1
             n_shift=2
             ;;
         -p|--part)
             shift
-            _part=$1
+            part=$1
             n_shift=2
             ;;
     esac
@@ -44,9 +44,9 @@ cat <<END
 END
 )" "$(
 cat <<END
--n	--nbd		Network Block Device (NBD) for loop-mount the image (default: $_nbd).
--i	--image		Image (.img) under $LKHH_IMAGE that hosts the OS (default: $_image).
--p	--part		Root partition number inside the image (default: $_part).
+-n	--nbd		Network Block Device (NBD) for loop-mount the image (default: $nbd).
+-i	--image		Image (.img) under $LKHHIMAGE that hosts the OS (default: $image).
+-p	--part		Root partition number inside the image (default: $part).
 END
 )" "$@"
 ret=$?
@@ -66,17 +66,17 @@ END1
 )
 END
 
-image_path="$LKHH_IMAGE/$_image.img"
+image_path="$LKHHIMAGE/$image.img"
 [[ -f "$image_path" ]] || die 1 <<END
 ERROR: $image_path is not an existing regular file.
 END
 
-nbd_device="/dev/nbd${_nbd}"
+nbd_device="/dev/nbd${nbd}"
 [[ -b "$nbd_device" ]] || die 1 <<END
 ERROR: $nbd_device is not a block special device.
 END
 
-mnt="$LKHH_IMAGE/mnt/$_nbd"
+mnt="$LKHHIMAGE/mnt/$nbd"
 mkdir -p "$mnt" 
 [[ -d "$mnt" ]] || die 1 <<END
 ERROR: $mnt is not an existing directory.
@@ -91,9 +91,9 @@ done
 vecho 0 <<END
 sudo qemu-nbd -c "$nbd_device" "$image_path"
 sudo partprobe "$nbd_device"
-sudo mount "${nbd_device}p${_part}" "$mnt"
+sudo mount "${nbd_device}p${part}" "$mnt"
 END
 
 sudo qemu-nbd -c "$nbd_device" "$image_path"
 sudo partprobe "$nbd_device"
-sudo mount "${nbd_device}p${_part}" "$mnt"
+sudo mount "${nbd_device}p${part}" "$mnt"
