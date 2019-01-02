@@ -9,7 +9,7 @@ source "${_rootdir}/_shared_prologue"
 #
 # parameters
 #
-declare -i _instance=${_instance:-1}
+declare -i instance=${instance:-1}
 
 #
 # getopt processing
@@ -19,7 +19,7 @@ function my_getopt_cont () {
     case "$1" in
         -i|--instance)
             shift
-            _instance=$1
+            instance=$1
             n_shift=2
             ;;
     esac
@@ -32,7 +32,7 @@ cat <<END
 END
 )" "$(
 cat <<END
--i	--instance		Maximal number of kernel instances to prepare (default: $_instance).
+-i	--instance		Maximal number of kernel instances to prepare (default: $instance).
 END
 )" "$@"
 ret=$?
@@ -52,10 +52,10 @@ END1
 )
 END
 
-build_dir="$LKHH_ARENA/build/$_instance"
+build_dir="$LKHH_ARENA/build/$instance"
 
 [[ -d "$build_dir" ]] || die 1 <<END
-ERROR: $build_dir does not exist; consider "lkhh-init -i $_instance" first.
+ERROR: $build_dir does not exist; consider "lkhh-init -i $instance" first.
 END
 
 vecho 0 <<END
