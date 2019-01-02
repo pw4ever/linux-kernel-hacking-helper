@@ -116,10 +116,10 @@ make -C "$build_dir" -j "$jobs" "O=$build_dir" "M=$moduleroot" "$@" "$target"
 if (( install > 0 )); then
 
     vecho 0 <<END
-make -C "$build_dir" -j "$jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modulesinstall
+make -C "$build_dir" -j "$jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modules_install
 END
 
-    make -C "$build_dir" -j "$jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modulesinstall
+    make -C "$build_dir" -j "$jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modules_install
 
     mnt="$LKHH_IMAGE/mnt/$nbd"
 
@@ -127,9 +127,9 @@ END
         target_dir="$mnt/usr"
 
         vecho 0 <<END
-        sudo make -C "$build_dir" -j "$jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modulesinstall
+        sudo make -C "$build_dir" -j "$jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modules_install
 END
 
-        sudo make -C "$build_dir" -j "$jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modulesinstall
+        sudo make -C "$build_dir" -j "$jobs" "O=$build_dir" "M=$moduleroot" "INSTALL_MOD_PATH=$target_dir" "$@" modules_install
     fi
 fi
