@@ -210,6 +210,13 @@ lkhh-kernel-list
 #2:	configured	source@(/home/wei/upstream/linux)
 ```
 
+List all non-empty instances with kernel release version detection. Caveat: Detection use kbuild `make kernelrelease`, which could take about 1 second per instance; so `-V` is optional, rather than the default.
+```bash
+lkhh-kernel-list -V
+#1:	configured(4.20.0+)	source@(/data/upstream/linux)	built(vmlinux is up to date with .config)
+#2:	configured(4.20.0+)	source@(/data/upstream/linux)
+```
+
 List all instances, including empty ones
 ```bash
 lkhh-kernel-list -a
