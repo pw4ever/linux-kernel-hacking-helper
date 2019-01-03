@@ -88,6 +88,7 @@ export LKHH_DIR="$HOME/hacking/linux-kernel"
 export LKHH_BIN="$LKHH_DIR/bin"
 export LKHH_ARENA="$LKHH_DIR/arena"
 export LKHH_IMAGE="$LKHH_DIR/image"
+export LKHH_LINUX="$HOME/project/linux" # root of the kernel source Git repo; default to $HOME/project/linux.
 
 mkdir -p "$LKHH_DIR"
 
