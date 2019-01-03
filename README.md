@@ -84,11 +84,11 @@ First things first. Ensure you have [tools for building kernel](https://github.c
 Install `qemu` if you want to testing the built kernel/LKMs.
 
 ```bash
-export LKHH_DIR="$HOME/hacking/linux-kernel"
-export LKHH_BIN="$LKHH_DIR/bin"
-export LKHH_ARENA="$LKHH_DIR/arena"
-export LKHH_IMAGE="$LKHH_DIR/image"
-export LKHH_LINUX="$HOME/project/linux" # root of the kernel source Git repo; default to $HOME/project/linux.
+export LKHH_DIR="$HOME/hacking/linux-kernel"  # rootdir of LKHH; default to parent of PWD of the running script
+export LKHH_BIN="$LKHH_DIR/bin"  # rootdir of LKHH scripts; default to PWD of the running script
+export LKHH_ARENA="$LKHH_DIR/arena"  # rootdir for kernel instance build/target dirs; default to "$LKHH_DIR/arena"
+export LKHH_IMAGE="$LKHH_DIR/image"  # rootdir of OS images used by "lkhh-kernel-test-with-qemu"; default to "$LKHH_DIR/image"
+export LKHH_LINUX="$HOME/project/linux"  # rootdir of the kernel source Git repo; default to "$HOME/project/linux".
 
 mkdir -p "$LKHH_DIR"
 
