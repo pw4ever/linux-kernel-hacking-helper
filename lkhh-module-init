@@ -1,0 +1,185 @@
+#! /bin/bash
+
+_rootdir=${_rootdir:-"$(dirname "$(readlink -f "$0")")"}
+_ver="0.0.1-dev"
+#_author="Wei Peng <me@1pengw.com>"
+
+source "${_rootdir}/_shared_prologue"
+
+#
+# parameters
+#
+declare moduleroot=${moduleroot:-"$(readlink -f $PWD)"}
+declare -i main=0
+declare -i force=0
+
+#
+# getopt processing
+#
+function my_getopt_cont () {
+    local n_shift=1 # number of shifts in the outer loop; shift by 1 by default
+    case "$1" in
+        -m|--moduleroot)
+            shift
+            moduleroot=$1
+            n_shift=2
+            ;;
+        -M|--main)
+			((main++))
+            n_shift=1
+            ;;
+        -f|--force)
+			((force++))
+            n_shift=1
+            ;;
+    esac
+    return $n_shift
+}
+
+my_getopt "m:Mf" "moduleroot:,main,force" "my_getopt_cont" "Create a template Makefile" "$(
+cat <<END
+[-m|--moduleroot=<moduleroot>] [-M|--main]
+	[-f|--force]
+END
+)" "$(
+cat <<END
+-m	--moduleroot		Root directory of the module, where "Makefile" is found (default: $moduleroot).
+-M	--main		Create a main.c (default: $main).
+-f	--force		Forcibly create a file even if it exists (default: $force).
+END
+)" "$@"
+ret=$?
+eval set -- "$_getopt"
+shift $ret 
+
+# sanity check
+vecho 0 <<END
+$(
+dumpparam <<END1
+$(
+for name in moduleroot main force; do
+    echo "$name=$(echo $(eval "echo \$$name"))"
+done
+)
+END1
+)
+END
+
+if [[ ! -d "$moduleroot" ]]; then
+	mkdir -p "$moduleroot"
+fi
+
+moduleroot="$(readlink -f "$moduleroot")"
+
+[[ -d "$moduleroot" ]] || die 1 <<END
+ERROR: $moduleroot does not exist.
+END
+
+module=$(basename "$moduleroot")
+
+#
+# main.c
+#
+
+mainfile="$moduleroot/main.c"
+if (( main > 0 )); then
+	if [[ ! -f "$mainfile" ]] || (( force > 0 )); then
+		>"$mainfile" cat - <<END
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/fs.h>
+
+int ${module}_param = 0;
+
+module_param(${module}_param, int, S_IRUGO);
+
+static int ${module}_init(void)
+{
+    pr_info("Hello, world.\n");
+    return 0;
+}
+
+static void ${module}_exit(void)
+{
+    pr_info("Goodbye, world.\n");
+}
+
+MODULE_AUTHOR("$(whoami)");
+MODULE_LICENSE("Dual BSD/GPL");
+module_init(${module}_init);
+module_exit(${module}_exit);
+END
+	fi
+fi
+
+#
+# Makefile
+#
+
+makefile="$moduleroot/Makefile"
+
+>/dev/null pushd $moduleroot
+objfiles=$(2>/dev/null find * -name '*.c' -type f | sed 's/^\(.*\).c$/\1.o/' | tr "\n" " ")
+>/dev/null popd
+
+[[ -f "$makefile" ]] && (( force <= 0 )) && die 0 <<END
+$makefile exists; use -f/--force to forcibly create a new one.
+END
+
+
+>"$makefile" cat - <<END
+_name=Makefile.pre
+ifeq (\$(_name),\$(wildcard \$(_name)))
+include \$(_name)
+endif
+
+ifeq (\$(DEBUG),y)
+DEBFLAGS = -O -g # "-O" is needed to expand inlines
+else
+DEBFLAGS = -O2
+endif
+
+LOCALINC=\$(PWD)
+
+EXTRA_CFLAGS += \$(DEBFLAGS)
+EXTRA_CFLAGS += -I\$(LOCALINC)
+
+ifneq (\$(KERNELRELEASE),)
+# call from kernel build system
+
+${module}-objs := ${objfiles}
+
+obj-m	:= ${module}.o
+
+else
+
+KERNELDIR ?= /lib/modules/\$(shell uname -r)/build
+PWD       := \$(shell pwd)
+
+modules:
+	\$(MAKE) -C \$(KERNELDIR) M=\$(PWD) modules
+
+endif
+
+clean:
+	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions .*.o.d
+
+depend .depend dep:
+	\$(CC) \$(EXTRA_CFLAGS) -M *.c > .depend
+
+ifeq (.depend,\$(wildcard .depend))
+include .depend
+endif
+
+
+_name=Makefile.post
+ifeq (\$(_name),\$(wildcard \$(_name)))
+include \$(_name)
+endif
+END
