@@ -77,6 +77,20 @@ lkhh-module-make -I
 # lkhh-umount # if the testing OS image is mounted
 ```
 
+Alternatively, create a dual in/out-tree Makefile for an existing source-only project.
+```bash
+lkhh-module-init -h  # Show help.
+lkhh-module-init  # The LKM project is assumed to be rooted at pwd, and there goes the Makefile.
+lkhh-module-init -m hello  # The LKM project is rooted at `hello`; `hello/Makefile` is created if it does not exist...
+```
+
+Optionally, a simple main file can be created in addition to the Makefile.
+```bash
+lkhh-module-init -m hello -f  # ... or forcibly if `hello/Makefile` already exists.
+lkhh-module-init -m hello -M -f  # A LKM project is created under `hello`: `hello/Makefile` and `hello/main.c`.
+pushd hello; make; popd;  # ... afterwards, build the project use `make`.
+```
+
 # One-time setup
 
 First things first. Ensure you have [tools for building kernel](https://github.com/torvalds/linux/blob/master/Documentation/process/changes.rst#current-minimal-requirements); consult your distro documentation for instruction. For example, Arch Linux makes this [really easy](https://wiki.archlinux.org/index.php/Kernel/Traditional_compilation#Install_the_core_packages) with the `base-devel` package group. By design, LKHH does NOT help you with this because of the moving target and numerous various environments that user may want to use this.
