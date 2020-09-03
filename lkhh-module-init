@@ -75,7 +75,7 @@ moduleroot="$(readlink -f "$moduleroot")"
 ERROR: $moduleroot does not exist.
 END
 
-module=$(basename "$moduleroot")
+module=$(basename "$moduleroot" | tr -d '[:cntrl:]' | tr -s '[:space:]-' '[_*]')
 
 #
 # main.c
