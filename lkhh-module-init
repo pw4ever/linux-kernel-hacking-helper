@@ -85,6 +85,8 @@ mainfile="$moduleroot/main.c"
 if (( main > 0 )); then
 	if [[ ! -f "$mainfile" ]] || (( force > 0 )); then
 		>"$mainfile" cat - <<END
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
