@@ -89,10 +89,10 @@ END
 done
 
 vecho 0 <<END
-make -k -j $jobs -C "$build_dir" "O=$build_dir" "INSTALL_PATH=$target_dir" "INSTALL_MOD_PATH=$target_dir" "INSTALL_HDR_PATH=$target_dir" "$@" modules_install headers_install install
+make -k -j $jobs -C "$build_dir" "O=$build_dir" "INSTALL_PATH=$target_dir" "INSTALL_MOD_PATH=$target_dir" "INSTALL_HDR_PATH=$target_dir/usr" "$@" modules_install headers_install install
 END
 
-make -k -j $jobs -C "$build_dir" "O=$build_dir" "INSTALL_PATH=$target_dir" "INSTALL_MOD_PATH=$target_dir" "INSTALL_HDR_PATH=$target_dir" "$@" modules_install headers_install install
+make -k -j $jobs -C "$build_dir" "O=$build_dir" "INSTALL_PATH=$target_dir" "INSTALL_MOD_PATH=$target_dir" "INSTALL_HDR_PATH=$target_dir/usr" "$@" modules_install headers_install install
 
 if type -p mkinitcpio >/dev/null; then
     dir="$LKHH_ARENA/aux"; file="$dir/mkinitcpio.conf"
@@ -108,10 +108,10 @@ if type -p mkinitcpio >/dev/null; then
 
     if [[ -f "$_aux" ]] && [[ -f "$vmlinuz" ]]; then
         vecho 0 <<END
-mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux"
+mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux" -S "autodetect"
 END
 
-        mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux"
+        mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux" -S "autodetect"
     fi
 fi
 
@@ -139,10 +139,10 @@ if mountpoint "$mnt" >/dev/null; then
     target_dir="$mnt"
 
     vecho 0 <<END
-sudo make -k -j $jobs -C "$build_dir" "O=$build_dir" "INSTALL_PATH=$target_dir" "INSTALL_MOD_PATH=$target_dir" "INSTALL_HDR_PATH=$target_dir" "$@" modules_install headers_install install
+sudo make -k -j $jobs -C "$build_dir" "O=$build_dir" "INSTALL_PATH=$target_dir" "INSTALL_MOD_PATH=$target_dir" "INSTALL_HDR_PATH=$target_dir/usr" "$@" modules_install headers_install install
 END
 
-    sudo make -k -j $jobs -C "$build_dir" "O=$build_dir" "INSTALL_PATH=$target_dir" "INSTALL_MOD_PATH=$target_dir" "INSTALL_HDR_PATH=$target_dir" "$@" modules_install headers_install install
+    sudo make -k -j $jobs -C "$build_dir" "O=$build_dir" "INSTALL_PATH=$target_dir" "INSTALL_MOD_PATH=$target_dir" "INSTALL_HDR_PATH=$target_dir/usr" "$@" modules_install headers_install install
 
     if type -p mkinitcpio >/dev/null; then
         dir="$LKHH_ARENA/aux"; file="$dir/mkinitcpio.conf"
@@ -158,10 +158,10 @@ END
 
         if [[ -f "$_aux" ]] && [[ -f "$vmlinuz" ]]; then
             vecho 0 <<END
-sudo mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux"
+sudo mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux" -S "autodetect"
 END
 
-            sudo mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux"
+            sudo mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux" -S "autodetect"
         fi
     fi
 fi
