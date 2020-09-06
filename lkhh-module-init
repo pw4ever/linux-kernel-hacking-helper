@@ -143,7 +143,7 @@ include \$(_name)
 endif
 
 ifeq (\$(DEBUG),y)
-DEBFLAGS = -O -g # "-O" is needed to expand inlines
+DEBFLAGS = -O -g -DDEBUG # "-O" is needed to expand inlines
 else
 DEBFLAGS = -O2
 endif
