@@ -45,7 +45,7 @@ lkhh-kernel-make -t defconfig
 lkhh-kernel-merge-config -- $LKHH_BIN/config/debug
 lkhh-kernel-make -t all
 lkhh-mount
-lkhh-kernel-install
+lkhh-kernel-install # requires `dracut` for creating initrd
 lkhh-umount
 ```
 
@@ -138,7 +138,7 @@ lkhh-kernel-merge-config -i 1 $LKHH_BIN/config/kgdb  # merge kgdb support in con
 lkhh-kernel-make -i 1 -j 8 -t all  # build kernel instance 1 with 8 parallel jobs
 
 lkhh-mount -n 3 -i arch -p 2  # mount device '/dev/sda2' (the root partition) of '$LKHH_IMAGE/arch.img' with '/dev/ndb3' onto '$LKHH_IMAGE/mnt/3'
-lkhh-kernel-install -i 1 -n 3  # install kernel instance 1 into '$LKHH_IMAGE/mnt/3' (mounted partition of '$LKHH_IMAGE/arch.img' as above)
+lkhh-kernel-install -i 1 -n 3  # install kernel instance 1 into '$LKHH_IMAGE/mnt/3' (mounted partition of '$LKHH_IMAGE/arch.img' as above); require `dracut` to create initrd
 lkhh-umount -n 3  # umount '$LKHH_IMAGE/mnt/3' and diassociate '/dev/nbd3'
 
 # read kdb doc at https://www.kernel.org/doc/htmldocs/kgdb/index.html
