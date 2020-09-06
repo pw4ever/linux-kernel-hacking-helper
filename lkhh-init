@@ -62,16 +62,8 @@ mkdir -p "$LKHH_ARENA" || die 1 <<END
 Fail to create $LKHH_ARENA.
 END
 
-
 eval mkdir -p $LKHH_ARENA/{target,build}/{1..$instance} "$LKHH_ARENA/aux" "$LKHH_IMAGE/mnt" || >/dev/stderr vecho 0 <<END
 ERROR: Fail to create certain base directories.
-END
-
-file="$LKHH_BIN/aux/mkinitcpio.conf"
-dir="$LKHH_ARENA/aux"
-
-cp -f "$file" "$dir" || >/dev/stderr vecho 0 <<END
-ERROR: Fail to copy $file into $dir.
 END
 
 if (( download > 0 )); then

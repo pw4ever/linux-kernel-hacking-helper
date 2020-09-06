@@ -94,25 +94,30 @@ END
 
 make -k -j $jobs -C "$build_dir" "O=$build_dir" "INSTALL_PATH=$target_dir" "INSTALL_MOD_PATH=$target_dir" "INSTALL_HDR_PATH=$target_dir/usr" "$@" modules_install headers_install install
 
-if type -p mkinitcpio >/dev/null; then
-    dir="$LKHH_ARENA/aux"; file="$dir/mkinitcpio.conf"
+vmlinuz="$target_dir/vmlinuz"
+vecho 0 <<END
+KERNELRELEASE=$(cat $build_dir/include/config/kernel.release 2> /dev/null)
+END
+KERNELRELEASE=$(cat $build_dir/include/config/kernel.release 2> /dev/null)
+
+if type -p dracut > /dev/null; then
+
+    dir="$LKHH_ARENA/aux"; file="$dir/dracut.conf"
     for dir in "$LKHH_ARENA/aux" "$LKHH_BIN/aux"; do
-        file="$dir/mkinitcpio.conf"
+        file="$dir/dracut.conf"
         if [[ -f "$file" ]]; then
             _aux="$file"
             break
         fi
     done
 
-    vmlinuz="$target_dir/vmlinuz"
-
     if [[ -f "$_aux" ]] && [[ -f "$vmlinuz" ]]; then
         vecho 0 <<END
-mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux" -S "autodetect"
+dracut --kernel-image "$vmlinuz" --kmoddir "$target_dir/lib/modules/${KERNELRELEASE}" --force "$target_dir/initramfs-linux" "${KERNELRELEASE}"
 END
-
-        mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux" -S "autodetect"
+        dracut --kernel-image "$vmlinuz" --kmoddir "$target_dir/lib/modules/${KERNELRELEASE}" --force "$target_dir/initramfs-linux" "${KERNELRELEASE}"
     fi
+
 fi
 
 #
@@ -144,24 +149,23 @@ END
 
     sudo make -k -j $jobs -C "$build_dir" "O=$build_dir" "INSTALL_PATH=$target_dir" "INSTALL_MOD_PATH=$target_dir" "INSTALL_HDR_PATH=$target_dir/usr" "$@" modules_install headers_install install
 
-    if type -p mkinitcpio >/dev/null; then
-        dir="$LKHH_ARENA/aux"; file="$dir/mkinitcpio.conf"
+    if type -p dracut > /dev/null; then
+
+        dir="$LKHH_ARENA/aux"; file="$dir/dracut.conf"
         for dir in "$LKHH_ARENA/aux" "$LKHH_BIN/aux"; do
-            file="$dir/mkinitcpio.conf"
+            file="$dir/dracut.conf"
             if [[ -f "$file" ]]; then
                 _aux="$file"
                 break
             fi
         done
 
-        vmlinuz="$target_dir/vmlinuz"
-
         if [[ -f "$_aux" ]] && [[ -f "$vmlinuz" ]]; then
             vecho 0 <<END
-sudo mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux" -S "autodetect"
+sudo dracut  --kernel-image "$vmlinuz" --kmoddir "$target_dir/lib/modules/${KERNELRELEASE}" --force "$target_dir/initramfs-linux" "${KERNELRELEASE}"
 END
-
-            sudo mkinitcpio -g "$target_dir/initramfs-linux" -k "$vmlinuz" -r "$target_dir" -c "$_aux" -S "autodetect"
+            sudo dracut  --kernel-image "$vmlinuz" --kmoddir "$target_dir/lib/modules/${KERNELRELEASE}" --force "$target_dir/initramfs-linux" "${KERNELRELEASE}"
         fi
+
     fi
 fi
