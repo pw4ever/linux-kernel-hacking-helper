@@ -118,6 +118,12 @@ END
         dracut --kernel-image "$vmlinuz" --kmoddir "$target_dir/lib/modules/${KERNELRELEASE}" --force "$target_dir/initramfs-linux" "${KERNELRELEASE}"
     fi
 
+else # cannot find `dracut`
+
+    1>&2 cat - <<END
+Cannot find "dracut" on PATH: initrd creation fails.
+END
+
 fi
 
 #
@@ -166,6 +172,12 @@ sudo dracut  --kernel-image "$vmlinuz" --kmoddir "$target_dir/lib/modules/${KERN
 END
             sudo dracut  --kernel-image "$vmlinuz" --kmoddir "$target_dir/lib/modules/${KERNELRELEASE}" --force "$target_dir/initramfs-linux" "${KERNELRELEASE}"
         fi
+
+    else # cannot find `dracut`
+
+        1>&2 cat - <<END
+Cannot find "dracut" on PATH: initrd creation fails.
+END
 
     fi
 fi
