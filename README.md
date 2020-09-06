@@ -72,9 +72,10 @@ Afterwards, use `sudo modprobe hello` and `sudo modprobe -r hello` inside the QE
 Build and install an existing LKM.
 ```bash
 # pushd $HOME/project/my_lkm # `my_lkm` is the root of the LKM, with the minimal module Makefile (e.g., "obj-m := my_lkm.o")
-# lkhh-mount # if the testing OS image has not been mounted yet
-lkhh-module-make -I
-# lkhh-umount # if the testing OS image is mounted
+# make and install the default instance (1)
+lkhh-mount; lkhh-module-make -I; lkhh-umount;
+# make and install the explicit instance 1; parameters after -- is fed directly to make
+lkhh-mount; lkhh-module-make -i 1 -I -- DEBUG=y; lkhh-umount;
 ```
 
 Alternatively, create a dual in/out-tree Makefile for an existing source-only project.
