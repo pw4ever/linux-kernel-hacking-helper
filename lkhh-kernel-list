@@ -11,7 +11,6 @@ source "${_rootdir}/_shared_prologue"
 #
 declare -i all=${all:-0}
 declare foreach=${foreach:-}
-declare -i version=${version:-0}
 
 #
 # getopt processing
@@ -28,23 +27,18 @@ function my_getopt_cont () {
             foreach=$1
             n_shift=2
             ;;
-        -V|--version)
-            version=1
-            n_shift=1
-            ;;
     esac
     return $n_shift
 }
 
-my_getopt "af:V" "all,foreach:,version" "my_getopt_cont" "List state of build/target instances." "$(
+my_getopt "af:" "all,foreach:" "my_getopt_cont" "List state of build/target instances." "$(
 cat <<END
-[-a|--all] [-f|--foreach=<foreach>] [-V|--version]
+[-a|--all] [-f|--foreach=<foreach>]
 END
 )" "$(
 cat <<END
 -a	--all		List all initialized instances, not only non-empty ones (default: $all).
 -f	--foreach		A snippet of shell script to be eval'd, which takes each build path from stdin (default: $foreach).
--V	--version		Detect configured kernel version, which slows enumeration down (default: $version).
 END
 )" "$@"
 ret=$?
@@ -56,7 +50,7 @@ vecho 0 <<END
 $(
 dumpparam <<END1
 $(
-for name in all foreach version; do
+for name in all foreach; do
     echo "$name=$(echo $(eval "echo \$$name"))"
 done
 )
@@ -80,11 +74,9 @@ ls -d "$build_root"/* | sort -V | while IFS= read -r line; do
     output="$n:"
     if [[ -f "$line/.config" ]]; then
         output+="\tconfigured"; (( output_p++ ));
-        if (( version > 0 )); then
-            krel=$("$_rootdir/lkhh-kernel-make" -i "$n" -t kernelrelease -- -s)
-            if [[ -n "$krel" ]]; then
-                output+="($krel)"
-            fi
+        krel=$(cat "$line/include/config/kernel.release" 2> /dev/null)
+        if [[ -n "$krel" ]]; then
+            output+="($krel)"
         fi
     fi
     if [[ -h "$line/source" ]]; then output+="\tsource@($(readlink -f "$line/source"))"; (( output_p++ )); fi
