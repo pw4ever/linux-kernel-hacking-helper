@@ -8,6 +8,7 @@ ifneq ($(KERNELRELEASE),)
 
 ccflags-y += $(DBGFLAGS)
 ccflags-y += -I$(src)/include
+ccflags-y += -std=gnu17
 
 obj-m := <PROJECT>.o
 <PROJECT>-y := main.o

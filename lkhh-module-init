@@ -96,7 +96,6 @@ if (( main > 0 )); then
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/fs.h>
-#include <linux/proc_fs.h>
 
 int ${module}_param = 0;
 
@@ -152,6 +151,7 @@ LOCALINC=\$(PWD)
 
 EXTRA_CFLAGS += \$(DEBFLAGS)
 EXTRA_CFLAGS += -I\$(LOCALINC)
+EXTRA_CFLAGS += -std=gnu17
 
 ifneq (\$(KERNELRELEASE),)
 # call from kernel build system
